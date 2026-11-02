@@ -18,8 +18,13 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import rmcommon  # noqa: E402
 
 
-def natural(text, font_path):
+def natural(text, font_path, weight=None):
     f = ImageFont.truetype(font_path, 100)
+    if weight:
+        try:
+            f.set_variation_by_axes([weight])          # variable font: same weight as the scene
+        except Exception:
+            pass
     im = Image.new('L', (110 * len(text) + 100, 300)); ImageDraw.Draw(im).text((30, 60), text, font=f, fill=255)
     a = np.array(im) > 100; ys, xs = np.where(a)
     return xs.max() - xs.min() + 1, ys.max() - ys.min() + 1
@@ -51,10 +56,10 @@ def main():
         ok, im = cap.read()
         if not ok:
             break
-        FR.append(im.max(2))
+        FR.append(im.max(2))   # one channel uint8 per frame (memory)
     for k, v in W_.items():
         fp = fonts.get(v.get('weight') or 0, font)
-        na, nb = natural(v['text'], fp) if v['text'] else (1, 1)
+        na, nb = natural(v['text'], fp, v.get('weight')) if v['text'] else (1, 1)
         pose = {}
         for f, bx in v['track'].items():
             x, y, w, h = bx[:4]

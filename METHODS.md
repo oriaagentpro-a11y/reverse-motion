@@ -382,6 +382,22 @@ logo 3D, caméra qui bascule en perspective, ~70 mots animés. Aucun effet n'est
 Résultats : passe 1 (mots placés par la hauteur) 0,967 ; avec la pose et les lignes 0,976 ; après garde
 convergente **0,9886** (87 % des images ≥ 0,98), 0 anomalie, 0 fantôme, 0 manque, 0 couleur fausse.
 
+## 13. Pub claire de 56 s (9:16, 30 i/s, 1 698 images)
+
+Fond clair, photo d'une personne, livre 3D, page web, téléphones avec captures de discussion, ~80 mots.
+- Police trouvée : **Inter Tight** (0,67 contre 0,56 ; Inter seule 0,52 : l'interlettrage serré compte).
+- Inventaire OCR lancé deux fois (texte foncé sur clair `--dark`, texte clair sur bleu), dédoublonné,
+  textes corrigés (accents perdus par l'OCR : « monétiser », « leçon », « déjà »…), mots < 26 px laissés
+  dans la plaque (captures de discussion, couverture du livre, page web).
+- **P31** Mémoire : 1 698 images 720×1280 en couleur = 4,7 Go (+ 6 Go en float) → le suivi des mots
+  ne garde qu'un canal uint8 par image et la couleur des seules images de référence.
+- **P32** Texte blanc sur fond bleu : le canal max ne distingue pas le blanc du bleu (B ≈ 230) ;
+  texte clair mesuré sur la moyenne des canaux, texte foncé sur le canal min.
+- **P33** La piste son de l'original est plus courte que l'image (54,7 s contre 56,6 s) : ne pas
+  utiliser `-shortest` au remuxage, sinon la fin de la vidéo est coupée.
+Résultat : **0,9895** (88 % des images ≥ 0,98), 0 anomalie, 0 fantôme, 0 manque, 0 couleur fausse ;
+41 % des apparitions de mots en code éditable, le reste montré par la plaque.
+
 ## 11. Journal des scores du pilote
 
 | Étape | Pilote 0–5 s | Remarque |

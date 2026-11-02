@@ -20,7 +20,7 @@ from text_inventory import ink_box  # noqa: E402
 
 
 def chan(im, dark):
-    return (255 - im.min(2)) if dark else im.max(2)
+    return (255 - im.min(2)) if dark else im.mean(2).astype(np.uint8)
 
 
 def main():
@@ -29,13 +29,17 @@ def main():
     min_score = rmcommon.arg(a, 'min-score', 0.6, float); search = rmcommon.arg(a, 'search', 70, int)
     dark = '--dark' in a
     W_ = json.load(open(spec))
-    cap = cv2.VideoCapture(video); FR = []
+    # memory: one channel per frame (uint8) + colour only for the reference frames (a 1 min 720x1280 video
+    # would need ~5 GB in colour and ~6 GB more in float)
+    refs = {w['ref'] for w in W_}
+    cap = cv2.VideoCapture(video); FR = {}; G = []
     while True:
         ok, im = cap.read()
         if not ok:
             break
-        FR.append(im)
-    G = [chan(im, dark).astype(np.float32) for im in FR]
+        if len(G) in refs:
+            FR[len(G)] = im
+        G.append(chan(im, dark))
     H, Wd = G[0].shape
     res = {}
     for w in W_:
@@ -45,13 +49,13 @@ def main():
             print('pas d\'encre :', w['id']); continue
         x, y, bw, bh, _ = ib; pad = max(3, int(0.15 * bh))
         tx0, ty0 = max(0, x - pad), max(0, y - pad)
-        tpl = G[ref][ty0:y + bh + pad, tx0:x + bw + pad]
+        tpl = G[ref][ty0:y + bh + pad, tx0:x + bw + pad].astype(np.float32)
         off = (x - tx0, y - ty0)                     # ink box offset inside the template
         track = {ref: [x, y, bw, bh, 1.0]}
         for direction in (1, -1):
             px, py, ps = x, y, 1.0
             f = ref + direction
-            lo, hi = w.get('first', 0), w.get('last', len(FR) - 1)
+            lo, hi = max(0, w.get('first', 0)), min(len(G) - 1, w.get('last', len(G) - 1))
             while lo <= f <= hi:
                 best = None
                 for s in np.linspace(ps * 0.9, ps * 1.1, 9):
@@ -61,7 +65,7 @@ def main():
                     t = cv2.resize(tpl, (tw, th), interpolation=cv2.INTER_AREA)
                     sx0, sy0 = max(0, int(px - off[0] * s) - search), max(0, int(py - off[1] * s) - search)
                     sx1, sy1 = min(Wd, int(px - off[0] * s) + tw + search), min(H, int(py - off[1] * s) + th + search)
-                    reg = G[f][sy0:sy1, sx0:sx1]
+                    reg = G[f][sy0:sy1, sx0:sx1].astype(np.float32)
                     if reg.shape[0] < th or reg.shape[1] < tw:
                         continue
                     r = cv2.matchTemplate(reg, t, cv2.TM_CCOEFF_NORMED)

@@ -57,7 +57,7 @@ def ink_box(img, roi, dark, core=None):
     if x1 - x0 < 3 or y1 - y0 < 3:
         return None
     c = img[y0:y1, x0:x1]
-    g = (c.min(2) if dark else c.max(2)).astype(np.float32)
+    g = (c.min(2) if dark else c.mean(2)).astype(np.float32)   # light text: mean of channels (white on blue AND blue on black)
     bg = np.median(np.concatenate([g[0], g[-1], g[:, 0], g[:, -1]]))   # background level on the ROI border
     diff = (bg - g) if dark else (g - bg)
     m = diff > max(40.0, 0.45 * float(diff.max()) if diff.size else 40.0)
