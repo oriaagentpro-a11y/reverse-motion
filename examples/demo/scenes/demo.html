@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>reverse-motion · démo (copie de src/source.mp4)</title>
+<style>
+  @font-face { font-family: 'RM'; src: url('../../../engine/Outfit-var.ttf'); font-weight: 100 900; }
+  html, body { margin: 0; overflow: hidden; background: #FFF7ED; }
+  svg text { font-family: 'RM'; }
+</style>
+</head>
+<body>
+<!-- Toutes les valeurs viennent de analysis/measures.json (mesures sur la vidéo), pas du générateur. -->
+<svg id="s" width="640" height="360" viewBox="0 0 640 360">
+  <rect id="bg" width="640" height="360" fill="#FFF7ED"/>
+  <g id="s1"><text id="title" fill="#0F766E">Bouge.</text><circle id="ball" r="28" cy="180" fill="#0F766E"/></g>
+  <g id="s2"><rect id="ink" width="640" height="360" fill="#1F2937"/><g id="wordG"><text id="word" fill="#F59E0B">Créer</text></g></g>
+  <g id="s3"><rect id="sq" x="-45" y="-45" width="90" height="90" fill="#0F766E"/>
+    <rect id="track" x="60" y="294" width="520" height="12" rx="6" fill="#EDE2D2"/><rect id="bar" x="60" y="294" width="0" height="12" rx="6" fill="#F59E0B"/></g>
+  <g id="s4"><circle id="wipe" cx="320" cy="180" r="0" fill="#F59E0B"/><text id="num" fill="#1F2937">0</text><text id="label" fill="#1F2937">% fidèle</text>
+    <g id="end"><rect width="640" height="360" fill="#0F766E"/><text id="fin" fill="#FFF7ED">Fin.</text></g></g>
+</svg>
+<script src="../../../engine/node_modules/gsap/dist/gsap.min.js"></script>
+<script src="../../../engine/rm.js"></script>
+
+<script>
+const P = RM.deepMerge({
+  title: { left: 238, top: 55, w: 164, wt: 700 }, titleIn: [1.0, 0.4],          // fondu linéaire mesuré (rmse 0,003)
+  ball: { x0: 79.7, x1: 559.6, first: 0.5, every: 2, dur: 1.2, ease: 'power1.inOut' },   // fit_easing, rmse 0,16 px
+  words: ['Créer', 'Mesurer', 'Copier', 'Livrer'], wordBox: { Créer: [238, 156, 166, 48], Mesurer: [200, 158, 242, 44], Copier: [222, 150, 198, 58], Livrer: [234, 158, 174, 44] },
+  wordWt: 800, beat: 0.5, pop: { from: 0.6, dur: 0.25, ease: 'back.out(1.7)' },       // 1 mot par temps (120 BPM, beats.py)
+  square: { cx: 320, cy: 160, side: 89.6, degPerS: 90 }  /* minAreaRect donne 319,5 en indices de pixels : +0,5 = coordonnée */, bar: { x: 60, w: 520, t0: 32, t1: 48 },
+  wipe: { t0: 48.2133, dur: 0.8, r0: 3.34, r: 801.4, ease: 'power1.in' },   // fit_easing sur le rayon : 1247 px/s², départ 48,2133 s
+  num: { cx: 320, cy: 165, h100: 70, wt: 800, t0: 49.5, dur: 3, ease: 'power1.out' }, label: { left: 272, top: 234, w: 96, wt: 400 },
+  fin: { left: 257, top: 151, w: 127, wt: 700, t0: 60, dur: 0.5 },
+}, RM.overrides());
+const $ = id => document.getElementById(id);
+// centre an SVG text on its ink box (the counter changes width while it counts)
+function centerInk(el, cx, cy) { const m = RM.measure(el.textContent, el.getAttribute('font-size'), el.getAttribute('font-weight'));
+  el.setAttribute('x', cx - (m.actualBoundingBoxRight - m.actualBoundingBoxLeft) / 2); el.setAttribute('y', cy + (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2); }
+let tl;
+async function build() {
+  await RM.fontsReady([400, 700, 800]);
+  if (window.BRAND) RM.applyBrand();
+  RM.fitInk($('title'), P.title); RM.fitInk($('label'), P.label); RM.fitInk($('fin'), P.fin);
+  $('num').textContent = '100'; RM.sizeInk($('num'), { h: P.num.h100, wt: P.num.wt });
+  $('sq').setAttribute('x', -P.square.side / 2); $('sq').setAttribute('y', -P.square.side / 2); $('sq').setAttribute('width', P.square.side); $('sq').setAttribute('height', P.square.side);
+  tl = gsap.timeline({ paused: true });
+  // S1 : titre en fondu, bille en aller-retour toutes les 2 s
+  tl.fromTo('#title', { opacity: 0 }, { opacity: 1, duration: P.titleIn[1], ease: 'none', immediateRender: false }, P.titleIn[0]);
+  gsap.set(['#title', '#end'], { opacity: 0 }); gsap.set('#ball', { attr: { cx: P.ball.x0 } });
+  for (let k = 0, t = P.ball.first; t < 16; k++, t += P.ball.every)
+    tl.to('#ball', { attr: { cx: k % 2 ? P.ball.x0 : P.ball.x1 }, duration: P.ball.dur, ease: P.ball.ease }, t);
+  // S2 : un mot par temps, qui « pop » depuis 60 % autour du centre de son encre (calculé dans seek : exact à chaque image)
+  const popEase = gsap.parseEase(P.pop.ease);
+  // S3 : carré en rotation continue, barre de progression linéaire
+  tl.fromTo('#bar', { attr: { width: 0 } }, { attr: { width: P.bar.w }, duration: P.bar.t1 - P.bar.t0, ease: 'none', immediateRender: false }, P.bar.t0);
+  // S4 : volet circulaire, compteur, carton de fin
+  tl.fromTo('#wipe', { attr: { r: P.wipe.r0 } }, { attr: { r: P.wipe.r }, duration: P.wipe.dur, ease: P.wipe.ease, immediateRender: false }, P.wipe.t0);
+  const c = { v: 0 };
+  tl.fromTo(c, { v: 0 }, { v: 100, duration: P.num.dur, ease: P.num.ease, immediateRender: false,
+    onUpdate: () => { $('num').textContent = Math.round(c.v); centerInk($('num'), P.num.cx, P.num.cy); } }, P.num.t0);
+  tl.fromTo('#end', { opacity: 0 }, { opacity: 1, duration: P.fin.dur, ease: 'none', immediateRender: false }, P.fin.t0);
+  window.__rm = { ready: true, seek(t) {
+    tl.seek(t, false);
+    for (const [id, a, b] of [['s1', 0, 16], ['s2', 16, 32], ['s3', 32, 48], ['s4', 48, 1e9]]) $(id).style.display = t >= a && t < b ? '' : 'none';
+    $('sq').setAttribute('transform', `translate(${P.square.cx} ${P.square.cy}) rotate(${P.square.degPerS * (t - 32)})`);
+    if (t >= 16 && t < 32) { const w = P.words[Math.floor((t - 16) / P.beat + 1e-6) % P.words.length], b = P.wordBox[w] || P.wordBox[P.words[0]];
+      if ($('word').textContent !== w || !$('word').getAttribute('font-size')) { $('word').textContent = w; RM.fitInk($('word'), { left: b[0], top: b[1], w: b[2], wt: P.wordWt }); }
+      const p = Math.min(1, (((t - 16) + 1e-6) % P.beat) / P.pop.dur);
+      gsap.set('#wordG', { scale: P.pop.from + (1 - P.pop.from) * popEase(p), svgOrigin: `${b[0] + b[2] / 2} ${b[1] + b[3] / 2}` }); }
+    if (+$('bar').getAttribute('width') <= 12) $('bar').setAttribute('width', 0); // l'original ne dessine la barre qu'au-delà de son arrondi
+    const show = t >= P.num.t0; $('num').style.display = $('label').style.display = show ? '' : 'none';
+    if (show) { c.v = Math.min(100, c.v); $('num').textContent = Math.round(c.v); centerInk($('num'), P.num.cx, P.num.cy); }
+  } };
+  window.__rm.seek(0);
+}
+build();
+</script>
+</body>
+</html>

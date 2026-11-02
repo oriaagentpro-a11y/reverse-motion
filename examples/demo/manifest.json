@@ -1,0 +1,9 @@
+{
+ "source": "src/source.mp4",
+ "segments": [
+  {"id": "S1 bille", "kind": "scene", "html": "scenes/demo.html", "start": 0, "end": 16},
+  {"id": "S2 mots", "kind": "scene", "html": "scenes/demo.html", "start": 16, "end": 32},
+  {"id": "S3 carre", "kind": "scene", "html": "scenes/demo.html", "start": 32, "end": 48},
+  {"id": "S4 fin", "kind": "scene", "html": "scenes/demo.html", "start": 48, "end": 64}
+ ]
+}

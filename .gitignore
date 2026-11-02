@@ -1,0 +1,7 @@
+engine/node_modules/
+__pycache__/
+*.pyc
+dist/
+examples/demo/out*/
+examples/demo/src/*.mp4
+.DS_Store
