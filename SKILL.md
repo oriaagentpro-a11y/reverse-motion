@@ -1,6 +1,6 @@
 ---
 name: reverse-motion
-description: Reproduit une vidéo motion design fournie en code HTML/SVG/WebGL + GSAP éditable, image par image, avec mesure automatique de fidélité (SSIM, Delta E, garde anti-fantômes) et version rebrandée. À utiliser quand on donne une vidéo motion et qu'on veut la décalquer, en reprendre la recette ou la décliner aux couleurs d'une marque.
+description: Recrée intégralement une vidéo motion design en code HTML/SVG/WebGL + GSAP éditable (objets 3D via Blender + Three.js), image par image, avec mesure de fidélité et version rebrandée. À utiliser quand on donne une vidéo motion à reproduire, décalquer ou décliner aux couleurs d'une marque.
 ---
 
 # reverse-motion
@@ -19,7 +19,7 @@ Méthode : enquêter, mesurer, reconstruire, vérifier, corriger, re-vérifier.
 > se change en une ligne. Détails : section « Tout recréer » plus bas.
 
 **Avant tout travail, lire `METHODS.md`** : ordre impératif des étapes, résultats mesurés de
-chaque technique, pièges déjà rencontrés (P1–P38). Pour tout objet 3D, lire aussi `BLENDER_GUIDE.md`
+chaque technique, pièges déjà rencontrés (P1–P39). Pour tout objet 3D, lire aussi `BLENDER_GUIDE.md`
 (techniques de modélisation, matériaux, lumière, rendu Cycles, boucle de correction).
 
 ## 0. Installation (une fois par machine)
@@ -61,7 +61,7 @@ seul (Playwright, Chrome, Chromium ou Edge ; sinon `CHROME_PATH`). Si un éléme
 | `scripts/extract_plate.py` | Plaque d'effet 2 ou 3 couleurs par image, ou **en couleurs réelles** (`--rgb`) pour le verre, les halos, la 3D |
 | `scripts/ghost_guard.py` | Repère les éléments en code qui ne collent pas à l'original (pendant le travail, la plaque les remplace ; au livrable, chaque élément repéré est à recréer mieux) |
 | `scripts/optimize.py` | Réglage automatique des paramètres d'une scène |
-| `scripts/compose.py` / `assemble.py` | Calques ; vidéo complète + rapport (segments, coupes, anomalies, fantômes) |
+| `scripts/compose.py` / `assemble.py` | Calques ; vidéo complète + rapport (segments, coupes, anomalies, fantômes, recréation) |
 | `scripts/recolor.py` / `rhythm.py` | Rebrand des segments extraits ; contrôle que le rythme est identique |
 
 Exemple complet et libre de droits : `examples/demo/` (64 s, 25 i/s, 640×360, musique).
