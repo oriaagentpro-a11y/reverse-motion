@@ -24,6 +24,10 @@ chaque technique, pièges déjà rencontrés (P1–P38). Pour tout objet 3D, lir
 
 ## 0. Installation (une fois par machine)
 
+Si un script, `engine/rm-3d.js`, `METHODS.md` ou `BLENDER_GUIDE.md` cité ici manque dans le dossier
+du skill, récupérer la version complète : `git clone https://github.com/oriaagentpro-a11y/reverse-motion`
+et travailler depuis ce dossier.
+
 `bash install.sh` (Linux, macOS, WSL) ou `install.ps1` (Windows), puis `python3 scripts/doctor.py`
 doit finir par « Tout est prêt ». Requis : Node 18+, Python 3.9+, ffmpeg. Chromium est trouvé tout
 seul (Playwright, Chrome, Chromium ou Edge ; sinon `CHROME_PATH`). Si un élément manque, le dire
