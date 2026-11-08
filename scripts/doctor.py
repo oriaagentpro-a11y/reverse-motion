@@ -34,6 +34,15 @@ for mod, pkg in [('numpy', 'numpy'), ('cv2', 'opencv-python'), ('skimage', 'scik
 nm = os.path.join(ROOT, 'engine', 'node_modules')
 for pkg in ['playwright', 'gsap', 'pngjs', 'd3-geo', 'topojson-client', 'world-atlas']:
     line(os.path.isdir(os.path.join(nm, pkg)), f'module Node {pkg}', f'cd {os.path.join(ROOT, "engine")} && npm install')
+# 3D objects (rule "objets 3D"): Three.js bundle for live models, Blender (bpy module or executable) for Cycles renders
+line(os.path.isfile(os.path.join(ROOT, 'engine', 'vendor', 'three-rm.js')), 'Three.js (engine/vendor/three-rm.js)',
+     f'cd {os.path.join(ROOT, "engine")} && npm install   (construit le bundle)')
+try:
+    import bpy  # noqa: F401
+    line(True, f'Blender (module bpy {bpy.app.version_string})')
+except Exception:  # noqa: BLE001
+    bl = os.environ.get('BLENDER_PATH') or shutil.which('blender')
+    line(bl is not None, f'Blender ({bl or "introuvable"})', f'bash {os.path.join(HERE, "blender_setup.sh")}')
 exe = rmcommon.chrome_path()
 line(exe is not None, f'Chromium ({exe or "introuvable"})', 'cd engine && npx playwright install chromium   (ou CHROME_PATH=...)')
 

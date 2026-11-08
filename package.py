@@ -3,7 +3,7 @@ Usage: python3 package.py [out_dir]"""
 import os, sys, zipfile, fnmatch
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, 'dist')
-SKIP_DIRS = {'node_modules', '__pycache__', 'dist', '.git'}
+SKIP_DIRS = {'node_modules', '__pycache__', 'dist', '.git', 'vendor'}   # vendor: Three.js bundle, rebuilt by npm install
 SKIP = ['examples/demo/out*', 'examples/demo/src/*.mp4', '*.pyc', '.DS_Store']
 os.makedirs(OUT, exist_ok=True)
 dst = os.path.join(OUT, 'reverse-motion.zip'); n = 0

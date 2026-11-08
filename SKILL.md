@@ -10,7 +10,8 @@ rendue image par image, et tu prouves la fidélité par des mesures, jamais à l
 Méthode : enquêter, mesurer, reconstruire, vérifier, corriger, re-vérifier.
 
 **Avant tout travail, lire `METHODS.md`** : ordre impératif des étapes, résultats mesurés de
-chaque technique, pièges déjà rencontrés (P1–P24).
+chaque technique, pièges déjà rencontrés (P1–P38). Pour tout objet 3D, lire aussi `BLENDER_GUIDE.md`
+(techniques de modélisation, matériaux, lumière, rendu Cycles, boucle de correction).
 
 ## 0. Installation (une fois par machine)
 
@@ -34,6 +35,11 @@ seul (Playwright, Chrome, Chromium ou Edge ; sinon `CHROME_PATH`). Si un éléme
 | `scripts/fit_text_pose.py` | Taille et inclinaison réelles d'un mot à partir de sa boîte et de son encre |
 | `scripts/fit_easing.py` | Ease GSAP, début, durée, valeurs d'un mouvement mesuré |
 | `scripts/fit_globe.py` / `globe_js.py` | Pose 3D d'un globe par image |
+| `scripts/fit_object_pose.py` | Pose 3D (rotation, position) d'un objet par image : homographie ECC + solvePnP, ambiguïté levée par la silhouette réelle |
+| `scripts/blender_setup.sh` | Installe Blender (`pip install bpy`, sinon exécutable Blender) |
+| `scripts/blender_object.py` | Modélise l'objet dans Blender depuis `object.json`, calibre ses matières sur la vidéo, le rend avec Cycles sur sa pose (flou de mouvement, fondu), exporte le GLB |
+| `scripts/object_score.py` | Fidélité locale d'un objet 3D (SSIM, Delta E dans sa zone) + planche vidéo / modèle / écart |
+| `engine/rm-3d.js` | Objet 3D dans la scène : images Cycles (`frames`) ou modèle Three.js en direct (`live`), sur la pose mesurée |
 | `engine/render.mjs` | Rendu image par image (`--fps --w --h --start --end`, `--transparent`, `--holes`, `--brand`, flou `blurAt`) |
 | `engine/rm.js` | Texte par boîte d'encre (`fitInk`), pistes (`trackAt`), homographie, recalage (`applyReg`), marque (`applyBrand`, `brandColor`) |
 | `engine/rm-gl.js` | Plaques WebGL, shaders (ondes, mosaïque), mode décalque par scène, garde anti-fantômes |
@@ -53,6 +59,9 @@ S'en servir comme modèle de structure (`manifest.json`, `scenes/`, `analysis/`)
 1. **Cartographier** : `ffprobe` (i/s et taille : ne jamais supposer 30 i/s ni 736×414),
    planches-contact horodatées, coupes, palette exacte (couleur modale), `beats.py`.
    Écrire `analysis/scenes.json` : une entrée par scène (fond, type, contenu).
+   **Inventaire 3D** : chaque icône ou objet en relief (faces latérales, ombres propres, reflets,
+   rotation qui montre l'épaisseur) va dans `analysis/objects_3d.json` : nom, images début-fin,
+   image de référence nette, boîte, pièces (corps, pictogramme, badge, texte), matières.
 2. **Police** : `font_search.py` sur 3-4 mots nets. Garder la plus proche sans interrompre
    l'utilisateur ; la nommer dans le rapport. Préférer une police variable.
 3. **Mesurer** chaque élément (`track_*`), puis `fit_easing.py` sur chaque piste. Utiliser les
@@ -65,7 +74,15 @@ S'en servir comme modèle de structure (`manifest.json`, `scenes/`, `analysis/`)
    Vidéo « 3D » (verre, reflets, halos, dégradés) → plaques `--rgb` ; textes : `text_inventory.py`
    → liste des mots → `track_words.py` → `fit_text_pose.py` (taille, inclinaison) → `track_lines.py`
    (homographie des lignes, CSS matrix3d). Exemple : METHODS.md § 12.
+
+4 bis. **Objets 3D** (automatique pour tout l'inventaire 3D, sans que l'utilisateur le demande) :
+   `fit_object_pose.py` (pose par image, `--depth`, `--radius`, `--ignore` pour un badge collé) →
+   `object.json` (formes et couleurs mesurées sur l'image de référence) → `blender_object.py
+   --only-ref --calibrate video:3` (matières calibrées) → rendu de toutes les images avec `--glb`
+   → `object_score.py` → corriger UNE cause à la fois (BLENDER_GUIDE § 15) → `RM3D.object` dans la
+   scène (canvas dans `fgIds`). Exemple et chiffres : METHODS.md § 14.
 5. **Comparer** : `render.mjs` puis `compare.py`. Regarder les pires images ET la vidéo côte à côte.
+   Chaque objet 3D a son propre score (`object_score.py`) et sa planche, au rapport.
 6. **Corriger** dans cet ordre : recalage (`register.py`, mode encre) → trous → plaque →
    **garde anti-fantômes** (`ghost_guard.py`, puis trous et plaque à nouveau, 2 passes) → rendu.
 7. **Assembler** : `assemble.py manifest.json out/` → `reproduction.mp4` (avec le son),
@@ -82,8 +99,11 @@ S'en servir comme modèle de structure (`manifest.json`, `scenes/`, `analysis/`)
 - Rien n'est ignoré ni « à peu près » : chaque défaut vu ou mesuré est corrigé ou signalé.
 - Ne jamais annoncer un score sans l'avoir mesuré ; donner le score par segment et la liste
   des défauts restants.
-- Visuels non recréables (rendus 3D d'autres projets, logos de tiers, dessin animé à la main) :
-  les **extraire** de la vidéo (segment `extract`) et le signaler dans le rapport.
+- **Objets et icônes 3D** : toujours reproduits en 3D (Blender + Three.js), à fidélité maximale,
+  même si l'utilisateur ne le demande pas. Score local par objet au rapport. La garde
+  anti-fantômes reste le filet : une image où le modèle ne colle pas montre l'original.
+- Seuls restent **extraits** de la vidéo (segment `extract`, signalé au rapport) : les photos de
+  personnes, les images filmées, le dessin animé à la main.
 - Couleurs dessinées en JavaScript (canvas) : toujours via `RM.brandColor('#...')`, sinon le
   rebrand ne les voit pas.
 - Droits : la copie exacte d'une œuvre d'autrui n'est pas à publier ; pour un usage commercial,

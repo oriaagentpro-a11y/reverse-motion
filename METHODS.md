@@ -398,6 +398,65 @@ Fond clair, photo d'une personne, livre 3D, page web, téléphones avec captures
 Résultat : **0,9895** (88 % des images ≥ 0,98), 0 anomalie, 0 fantôme, 0 manque, 0 couleur fausse ;
 41 % des apparitions de mots en code éditable, le reste montré par la plaque.
 
+## 14. Objets et icônes 3D (règle « objets 3D » : Blender + Three.js)
+
+Tout objet en relief repéré à l'étape 1 (`analysis/objects_3d.json`) est remodelé en 3D sans que
+l'utilisateur le demande. Chaîne :
+1. **Pose** `fit_object_pose.py` : homographie ECC depuis une image de référence nette, coins → `solvePnP`
+   (IPPE), puis affinage sur la **silhouette réelle** (P34) et lissage temporel. Contrôle : `sil_iou` par image.
+2. **Fiche** `object.json` (BLENDER_GUIDE § 2) : corps (forme, profondeur, rayon, biseau), pictogrammes
+   (`rrects` + `polygons` fusionnés par booléen), badges (anneau, texte, police en graisse fixe), points
+   d'échantillonnage des couleurs. Mesures prises sur l'image de référence (composantes connexes, couleurs modales).
+3. **Matières calibrées** `blender_object.py --only-ref --calibrate video:3` (P36), puis UNE correction à la
+   fois en mesurant (BLENDER_GUIDE § 15) : biseau, rayon, lumières key/fill/rim, rugosité, spéculaire.
+4. **Animation des pièces** mesurée sur la vidéo : `scale_keys` (badge qui apparaît : aire de l'encre sombre /
+   aire de référence), `opacity_keys` (fondu : écart au fond rapporté à l'image de référence). Toutes les poses
+   deviennent des clés : **flou de mouvement Cycles** (P37).
+5. **Rendu** de toutes les images (`--glb` exporte aussi le modèle pour Three.js), `object_score.py` + planche.
+6. **Scène** : `RM3D.object` (canvas dans `fgIds`), mode `frames` (images Cycles) ou `live` (Three.js) ;
+   trous et plaque refaits sur la tranche, garde anti-fantômes en dernier filet.
+
+Pilote : icône « chat » de la pub Créateur (images 590-652, carré blanc arrondi, bulle bleue, badge « 3 ») :
+
+| Étape (image de référence 650) | SSIM local | ΔE |
+| --- | --- | --- |
+| premier modèle (lumières, couleurs à l'œil) | 0,874 | 6,7 |
+| matières calibrées sur la vidéo | 0,869 | 3,2 |
+| biseau fin, monde bleu faible, police en graisse 700 | 0,908 | 2,3 |
+| bulle d'un seul tenant (union booléenne), coins mesurés | 0,928 | 1,9 |
+| anneau du badge calibré aussi, noir mat (spéculaire 0) | 0,944 | 1,6 |
+| lumière d'appoint basse (faces latérales claires comme l'original) | **0,947** | **1,7** |
+| même modèle en Three.js (mode `live`, avant calibrage de l'anneau) | 0,925 | — |
+
+Sur les 63 images : **0,937** en moyenne (min 0,910), ΔE 1,9. Entrée floue (image 590) :
+0,858 → 0,891 avec flou de mouvement et fondu mesuré. La garde a quand même caché le modèle sur 590-600 (rotation
+rapide d'entrée : la face latérale du modèle dépasse, `extra` 0,2-0,6) : la plaque y montre l'original. Pour comparaison, la plaque (pixels de la vidéo) obtient 0,991 dans la même
+zone : un modèle 3D ne recopie pas le grain ni les reflets exacts du rendu d'origine. Vidéo entière :
+0,9888 (0,9891 avec la plaque seule), 87 % des images ≥ 0,98 ; images 588-665 : 0,9886 (min 0,978).
+Restent 60 à 210 pixels de contour par image (601-613, 630-641 : profil du bord et grain du plastique
+d'origine), signalés au rapport : ce ne sont pas des doublons, la garde ne les cache pas. Il apporte un objet
+éditable (couleurs, pose, timing, rebrand) ; l'écart restant est donné au rapport, objet par objet.
+
+- **P34** Un carré vu presque de face a deux poses qui donnent les mêmes coins (penché à gauche ou à droite) :
+  `solvePnP` seul fait sauter le signe d'une image à l'autre (+14° puis −12°). L'épaisseur tranche : on garde
+  la pose dont la silhouette 3D (faces latérales comprises) couvre les mêmes pixels. Un badge collé sur l'objet
+  fausse la silhouette : l'exclure (`--ignore`). Images sans silhouette (flou, fondu) : retirées, sinon le
+  lissage propage une pose fausse aux voisines.
+- **P35** Le score d'un objet se mesure modèle **posé sur la vidéo** dans la zone de l'objet : les pixels
+  d'origine sont alors entièrement remplacés, le score juge le modèle et non la plaque.
+- **P36** Couleur ≠ couleur de base : la lumière (monde bleu, key blanche) teinte le rendu. On mesure la couleur
+  rendue et la couleur vidéo aux mêmes points et on corrige la couleur de base en lumière linéaire ; un blanc qui
+  devrait dépasser 1 fait monter l'exposition. 3 passes suffisent. Un noir mat paraît gris si le spéculaire
+  reste à 0,5 : le baisser (0,15).
+- **P37** Sans clés d'animation, Cycles ne fait aucun flou de mouvement. Les poses mesurées sont posées en clés
+  (quaternions de signe continu, interpolation linéaire), `motion_blur_shutter` 0,5. Le débruiteur efface le
+  micro-grain (bump) : le grain d'une matière passe par la couleur, pas par le relief.
+- **P38** Sur `file://`, Chromium bloque les modules ES et `fetch` : Three.js et son chargeur glTF sont
+  regroupés à l'installation dans `engine/vendor/three-rm.js` (script classique), le GLB est livré en base64
+  dans `<objet>.glb.js`. Exporter le glTF **sans** conversion Y-haut (`export_yup=False`) pour garder les axes
+  de Blender ; un texte Blender (courbe) n'est pas exporté : le convertir en maillage. Dans Three.js, calculer
+  les matrices locales (`updateMatrixWorld`) avant de les copier, et rendre les deux faces.
+
 ## 11. Journal des scores du pilote
 
 | Étape | Pilote 0–5 s | Remarque |

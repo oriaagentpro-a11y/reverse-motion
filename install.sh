@@ -20,6 +20,8 @@ if [[ "${1:-}" != "--check" ]]; then
   "$PY" -m pip install -r "$HERE/requirements.txt" 2>/dev/null \
     || "$PY" -m pip install --break-system-packages -r "$HERE/requirements.txt" \
     || "$PY" -m pip install --user -r "$HERE/requirements.txt"
+  echo "== Blender (objets 3D : modélisation et rendu Cycles) =="
+  PYTHON="$PY" bash "$HERE/scripts/blender_setup.sh" || echo "(Blender non installé : les objets 3D seront rendus avec Three.js seulement)"
   echo "== Chromium (rendu et mesures) =="
   if [[ -z "${CHROME_PATH:-}" ]]; then
     (cd "$HERE/engine" && npx --yes playwright install chromium) || echo "(installation de Chromium impossible : définissez CHROME_PATH vers un Chrome existant)"

@@ -7,3 +7,6 @@ pillow>=10.0
 playwright>=1.40
 librosa>=0.10
 fonttools>=4.40
+# Objets 3D : Blender comme module Python (gros paquet, ~400 Mo ; installé par scripts/blender_setup.sh,
+# qui se rabat sur un exécutable Blender si aucune roue bpy n'existe pour cette version de Python)
+# bpy

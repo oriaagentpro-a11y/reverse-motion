@@ -70,6 +70,7 @@ différences) et `out/report.json` (scores par segment, anomalies, fantômes pos
 | Recaler image par image | `scripts/register.py` |
 | Plaques d'effet WebGL | `scripts/extract_plate.py` |
 | Garde anti-fantômes | `scripts/ghost_guard.py` |
+| Objets et icônes 3D : pose, modèle Blender, rendu Cycles, Three.js | `scripts/fit_object_pose.py`, `scripts/blender_setup.sh`, `scripts/blender_object.py`, `scripts/object_score.py`, `engine/rm-3d.js` (guide : `BLENDER_GUIDE.md`) |
 | Régler automatiquement | `scripts/optimize.py` |
 | Assembler + rapport | `scripts/assemble.py` |
 | Rebrand : recolorer, vérifier le rythme | `scripts/recolor.py`, `scripts/rhythm.py` |

@@ -5,6 +5,7 @@ manifest = {"source": "src.mp4", "end": 46.9667, "segments": [
    {"id": "S01-S03", "kind": "scene", "html": "scenes/pilot.html", "start": 0, "end": 5.0667},
    {"id": "S05", "kind": "layer", "html": "scenes/s05.html", "start": 8.5, "end": 11.1667},   # transparent, drawn on top
    {"id": "S09-S13", "kind": "extract", "start": 20.8, "end": 26.8333, "reason": "..."}, ...]}
+Optional "objects_3d": path of the 3D inventory (default analysis/objects_3d.json), copied into the report.
 Paths are relative to the manifest. Writes out_dir/reproduction.mp4 (with the source audio),
 out_dir/side_by_side.mp4 and out_dir/report.json (SSIM / Delta E per segment).
 With --brand: every scene is rendered with the brand file (colours, texts), extracted segments are
@@ -143,6 +144,12 @@ def main():
             cv2.imwrite(os.path.join(out, 'ghosts.png'), np.vstack(tiles))
     cuts = sorted({round(sg['start'] * fps) for sg in man['segments']} | {round(sg['end'] * fps) for sg in man['segments']})
     report['cuts'] = [{'frame': c, 'before': ss[c - 1] if 0 < c <= len(ss) else None, 'after': ss[c] if c < len(ss) else None} for c in cuts]
+    # 3D objects (rule "objets 3D"): one row per inventoried object, with its own local score (object_score.py)
+    inv = os.path.join(base, man.get('objects_3d', 'analysis/objects_3d.json'))
+    if os.path.exists(inv):
+        report['objects_3d'] = json.load(open(inv))
+        for o in report['objects_3d']:
+            print(f"  objet 3D {o['name']:16s} {o.get('status', '?'):28s} {o.get('score', '')}")
     json.dump(report, open(os.path.join(out, 'report.json'), 'w'), indent=1, ensure_ascii=False)
     print(f'{len(anomalies)} anomalies', [a['frame'] for a in anomalies][:40])
     print(f"{len(runs)} plages à fantômes possibles, {len(miss)} plages à éléments manquants, {len(col)} plages à couleurs fausses",
