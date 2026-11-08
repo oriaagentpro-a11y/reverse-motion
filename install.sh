@@ -14,6 +14,11 @@ if [[ "${1:-}" != "--check" ]]; then
     echo "  macOS : brew install ffmpeg   |   Ubuntu/Debian : sudo apt install ffmpeg   |   Windows : winget install ffmpeg"
     exit 1
   fi
+  if ! command -v tesseract >/dev/null; then
+    echo "tesseract (lecture des textes de la vidéo) manquant. Installez-le :"
+    echo "  macOS : brew install tesseract tesseract-lang   |   Ubuntu/Debian : sudo apt install tesseract-ocr tesseract-ocr-fra"
+    exit 1
+  fi
   echo "== Moteur de rendu (Node) =="
   (cd "$HERE/engine" && npm install --no-audit --no-fund)
   echo "== Outils d'analyse (Python) =="

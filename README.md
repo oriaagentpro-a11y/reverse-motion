@@ -19,7 +19,7 @@
 
 ## Installation
 
-Il faut **Node.js 18+**, **Python 3.9+** et **ffmpeg**.
+Il faut **Node.js 18+**, **Python 3.9+**, **ffmpeg** et **tesseract** (lecture des textes). Guide pas à pas pour débutants : `GUIDE_reverse-motion.pdf`.
 
 ```bash
 # Linux / macOS / WSL

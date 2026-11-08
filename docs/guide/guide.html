@@ -1,0 +1,849 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>reverse-motion — Guide pas à pas</title>
+<style>
+  @page { size: A4; margin: 18mm 17mm 20mm 17mm; }
+  :root {
+    --ink: #15181F; --soft: #4A5162; --mute: #7A8193; --line: #DCE0E8; --bg: #F4F6FA;
+    --acc: #3355D6; --acc-bg: #EEF2FD; --ok: #1E7F55; --ok-bg: #EAF6F0; --warn: #A8650F; --warn-bg: #FCF4E6;
+    --check: #5B3FC4; --check-bg: #F2EFFC; --term: #12151C;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { font-family: 'Inter', sans-serif; font-size: 9.9pt; line-height: 1.5; color: var(--ink); margin: 0; }
+  h1, h2, h3, .display { font-family: 'Inter Display', 'Inter', sans-serif; letter-spacing: -0.01em; }
+  h1 { font-size: 24pt; line-height: 1.12; margin: 0 0 3mm; font-weight: 700; }
+  h2 { font-size: 14pt; margin: 6mm 0 2.2mm; font-weight: 700; break-after: avoid; }
+  h3 { font-size: 11.5pt; margin: 5mm 0 1.5mm; font-weight: 650; break-after: avoid; }
+  p { margin: 0 0 2.6mm; }
+  a { color: var(--acc); text-decoration: none; }
+  code, .mono { font-family: 'DejaVu Sans Mono', monospace; font-size: 8.9pt; }
+  p code, li code, td code { background: var(--bg); border: 1px solid var(--line); border-radius: 3px; padding: 0 3px; }
+  ul, ol { margin: 0 0 3mm; padding-left: 6mm; }
+  li { margin-bottom: 1.2mm; }
+  strong { font-weight: 650; }
+
+  .chapter { break-before: page; }
+  .kicker { font-size: 9pt; font-weight: 650; letter-spacing: 0.12em; text-transform: uppercase; color: var(--acc); margin-bottom: 2mm; }
+  .lead { font-size: 11pt; color: var(--soft); margin-bottom: 4mm; }
+  .part { break-before: page; height: 245mm; display: flex; flex-direction: column; justify-content: center; }
+  .part .num { font-family: 'Inter Display'; font-size: 64pt; font-weight: 800; color: var(--acc); line-height: 1; }
+  .part h1 { font-size: 32pt; margin-top: 4mm; }
+  .part .lead { max-width: 135mm; }
+  .part ul { color: var(--soft); }
+
+  /* encadrés */
+  .box { border-radius: 6px; padding: 2.6mm 3.6mm 1.8mm; margin: 2.4mm 0 3.2mm; break-inside: avoid; border-left: 4px solid; }
+  .box .t { font-weight: 700; font-size: 9pt; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 1mm; }
+  .box p:last-child, .box ul:last-child { margin-bottom: 1mm; }
+  .tip { background: var(--ok-bg); border-color: var(--ok); } .tip .t { color: var(--ok); }
+  .warn { background: var(--warn-bg); border-color: var(--warn); } .warn .t { color: var(--warn); }
+  .check { background: var(--check-bg); border-color: var(--check); } .check .t { color: var(--check); }
+  .info { background: var(--acc-bg); border-color: var(--acc); } .info .t { color: var(--acc); }
+
+  /* terminal */
+  .term { background: var(--term); color: #E6E9F0; border-radius: 7px; margin: 2.5mm 0 4mm; break-inside: avoid; overflow: hidden; }
+  .term .bar { background: #222733; padding: 1.6mm 3mm; font-size: 7.6pt; color: #9AA2B4; display: flex; align-items: center; gap: 1.6mm; }
+  .term .bar i { width: 2.4mm; height: 2.4mm; border-radius: 50%; background: #4A5060; display: inline-block; }
+  .term .bar span { margin-left: 2mm; }
+  .term pre { margin: 0; padding: 3mm 4mm; font-family: 'DejaVu Sans Mono', monospace; font-size: 8.6pt; line-height: 1.55; white-space: pre-wrap; word-break: break-word; }
+  .term .c { color: #7F8799; } .term .p { color: #7FB0FF; } .term .g { color: #6FD39B; } .term .y { color: #F3C969; } .term .r { color: #FF8A80; }
+
+  /* prompt à copier */
+  .prompt { border: 1.5px dashed var(--acc); background: #FAFBFF; border-radius: 7px; padding: 3mm 4mm; margin: 2.5mm 0 4mm; break-inside: avoid; }
+  .prompt .t { font-size: 8pt; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--acc); margin-bottom: 1.2mm; }
+  .prompt p { margin: 0 0 1.5mm; font-size: 10pt; }
+
+  /* étapes numérotées */
+  .steps { counter-reset: s; list-style: none; padding: 0; margin: 2mm 0 4mm; }
+  .steps > li { counter-increment: s; position: relative; padding-left: 10mm; margin-bottom: 2.6mm; break-inside: avoid; }
+  .steps > li::before { content: counter(s); position: absolute; left: 0; top: 0.2mm; width: 6.4mm; height: 6.4mm; border-radius: 50%;
+    background: var(--acc); color: #fff; font-weight: 700; font-size: 8.6pt; display: flex; align-items: center; justify-content: center; }
+
+  table { width: 100%; border-collapse: collapse; margin: 2mm 0 3.4mm; font-size: 9pt; break-inside: auto; }
+  th { text-align: left; background: var(--bg); font-weight: 650; padding: 1.6mm 2.2mm; border-bottom: 1.5px solid var(--line); }
+  td { padding: 1.5mm 2.2mm; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr { break-inside: avoid; }
+
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; }
+  .card { border: 1px solid var(--line); border-radius: 7px; padding: 3.2mm 4mm; break-inside: avoid; }
+  .card h3 { margin-top: 0; }
+  .tag { display: inline-block; font-size: 7.6pt; font-weight: 700; padding: 0.4mm 2mm; border-radius: 10px; background: var(--acc-bg); color: var(--acc); letter-spacing: .04em; }
+  .fig { margin: 3mm 0 4mm; break-inside: avoid; text-align: center; }
+  .fig .cap { font-size: 8.4pt; color: var(--mute); margin-top: 1.5mm; }
+  .tree { font-family: 'DejaVu Sans Mono', monospace; font-size: 8.6pt; background: var(--bg); border: 1px solid var(--line); border-radius: 7px; padding: 3mm 4mm; white-space: pre; line-height: 1.6; margin: 2mm 0 4mm; break-inside: avoid; }
+  .tree b { color: var(--acc); font-weight: 600; }
+  .tree em { color: var(--mute); font-style: normal; }
+
+  /* couverture */
+  .cover { height: 257mm; display: flex; flex-direction: column; justify-content: space-between; padding: 6mm 2mm 0; }
+  .cover .brand { font-size: 9pt; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: var(--acc); }
+  .cover h1 { font-size: 46pt; line-height: 1.02; margin: 0 0 5mm; font-weight: 800; letter-spacing: -0.025em; }
+  .cover .sub { font-size: 15pt; color: var(--soft); max-width: 140mm; line-height: 1.4; }
+  .cover .meta { display: flex; gap: 8mm; font-size: 9pt; color: var(--mute); border-top: 1px solid var(--line); padding-top: 4mm; }
+  .cover .meta b { display: block; color: var(--ink); font-size: 10pt; }
+
+  /* sommaire */
+  .toc { list-style: none; padding: 0; margin: 0; }
+  .toc li { display: flex; align-items: baseline; margin: 0 0 1.6mm; }
+  .toc li.pt { margin-top: 4mm; font-weight: 700; font-size: 11pt; }
+  .toc li a { color: var(--ink); }
+  .toc li .dots { flex: 1; border-bottom: 1px dotted #B9BFCC; margin: 0 2mm; transform: translateY(-1mm); }
+  .toc li .pg { font-variant-numeric: tabular-nums; color: var(--soft); min-width: 7mm; text-align: right; }
+  .toc li.ch { padding-left: 6mm; }
+
+  .checklist { list-style: none; padding: 0; }
+  .checklist li { padding-left: 7mm; position: relative; }
+  .checklist li::before { content: ''; position: absolute; left: 0; top: 1mm; width: 3.6mm; height: 3.6mm; border: 1.5px solid var(--acc); border-radius: 2px; }
+  .small { font-size: 8.8pt; color: var(--soft); }
+  .nobreak { break-inside: avoid; }
+</style>
+</head>
+<body>
+
+<!-- ============================ COUVERTURE ============================ -->
+<section class="cover">
+  <div class="brand">Guide pas à pas · pour débutants</div>
+  <div>
+    <svg width="260" height="156" viewBox="0 0 150 90" style="margin-bottom:12mm">
+      <rect x="2" y="10" width="62" height="70" rx="8" fill="#EEF2FD" stroke="#3355D6" stroke-width="2"/>
+      <polygon points="25,32 25,58 45,45" fill="#3355D6"/>
+      <path d="M70 45 h18" stroke="#15181F" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M84 39 l6 6 -6 6" fill="none" stroke="#15181F" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <rect x="94" y="10" width="54" height="70" rx="8" fill="#15181F"/>
+      <text x="104" y="38" font-family="DejaVu Sans Mono" font-size="12" fill="#7FB0FF">&lt;/&gt;</text>
+      <rect x="104" y="48" width="34" height="4" rx="2" fill="#6FD39B"/>
+      <rect x="104" y="57" width="24" height="4" rx="2" fill="#F3C969"/>
+      <rect x="104" y="66" width="30" height="4" rx="2" fill="#4A5060"/>
+    </svg>
+    <h1>reverse-motion</h1>
+    <div class="sub">Installer et utiliser le skill qui recrée une vidéo motion design en code, puis l'adapte à votre script, votre voix et votre musique.</div>
+  </div>
+  <div class="meta">
+    <div><b>Pour qui</b>Personne qui n'a jamais utilisé de skill ni de terminal</div>
+    <div><b>Systèmes</b>Windows 10/11 et macOS</div>
+    <div><b>Version</b>Novembre 2026</div>
+  </div>
+</section>
+
+<!-- ============================ MODE D'EMPLOI ============================ -->
+<section class="chapter" id="lire">
+  <div class="kicker">Avant de commencer</div>
+  <h1>Comment lire ce guide</h1>
+  <p class="lead">Suivez les étapes dans l'ordre, sans en sauter. Chaque étape dit quoi faire, ce que vous devez voir à l'écran, et quoi faire si ça bloque.</p>
+
+  <h2>Les repères visuels</h2>
+  <div class="box tip"><div class="t">Astuce</div><p>Un conseil qui fait gagner du temps. Facultatif.</p></div>
+  <div class="box warn"><div class="t">Attention</div><p>Une erreur fréquente à éviter. À lire absolument.</p></div>
+  <div class="box check"><div class="t">Vérifiez</div><p>Ce que vous devez voir avant de passer à l'étape suivante. Si ce n'est pas le cas, allez au chapitre <a href="#depannage">Dépannage</a>.</p></div>
+  <div class="term"><div class="bar"><i></i><i></i><i></i><span>Terminal</span></div><pre><span class="c"># Un bloc sombre = une commande à copier-coller dans le terminal</span>
+<span class="p">&gt;</span> commande à copier</pre></div>
+  <div class="prompt"><div class="t">À écrire à Claude</div><p>Un bloc en pointillés = une phrase à copier dans Claude, en remplaçant ce qui est entre [crochets].</p></div>
+
+  <h2>Le parcours complet en un coup d'œil</h2>
+  <div class="fig">
+    <svg width="100%" viewBox="0 0 640 150">
+      <defs><marker id="ar" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#9AA2B4"/></marker></defs>
+      <g font-family="Inter" font-size="11" text-anchor="middle">
+        <g><rect x="4" y="30" width="96" height="74" rx="9" fill="#EEF2FD" stroke="#3355D6"/><text x="52" y="58" font-weight="700" fill="#3355D6">1</text><text x="52" y="76">Comprendre</text><text x="52" y="91" fill="#7A8193" font-size="9.5">10 min</text></g>
+        <g><rect x="110" y="30" width="96" height="74" rx="9" fill="#EEF2FD" stroke="#3355D6"/><text x="158" y="58" font-weight="700" fill="#3355D6">2</text><text x="158" y="76">Installer</text><text x="158" y="91" fill="#7A8193" font-size="9.5">45 à 90 min</text></g>
+        <g><rect x="216" y="30" width="96" height="74" rx="9" fill="#EEF2FD" stroke="#3355D6"/><text x="264" y="58" font-weight="700" fill="#3355D6">3</text><text x="264" y="76">Préparer</text><text x="264" y="91" fill="#7A8193" font-size="9.5">voix, musique</text></g>
+        <g><rect x="322" y="30" width="96" height="74" rx="9" fill="#EEF2FD" stroke="#3355D6"/><text x="370" y="58" font-weight="700" fill="#3355D6">4</text><text x="370" y="76">Lancer</text><text x="370" y="91" fill="#7A8193" font-size="9.5">parler à Claude</text></g>
+        <g><rect x="428" y="30" width="96" height="74" rx="9" fill="#EEF2FD" stroke="#3355D6"/><text x="476" y="58" font-weight="700" fill="#3355D6">5</text><text x="476" y="76">Vérifier</text><text x="476" y="91" fill="#7A8193" font-size="9.5">scores, côte à côte</text></g>
+        <g><rect x="534" y="30" width="100" height="74" rx="9" fill="#15181F"/><text x="584" y="58" font-weight="700" fill="#6FD39B">✓</text><text x="584" y="76" fill="#fff">Votre vidéo</text><text x="584" y="91" fill="#9AA2B4" font-size="9.5">MP4 + code</text></g>
+        <g stroke="#9AA2B4" stroke-width="1.6" marker-end="url(#ar)"><line x1="100" y1="67" x2="108" y2="67"/><line x1="206" y1="67" x2="214" y2="67"/><line x1="312" y1="67" x2="320" y2="67"/><line x1="418" y1="67" x2="426" y2="67"/><line x1="524" y1="67" x2="532" y2="67"/></g>
+      </g>
+    </svg>
+    <div class="cap">L'installation (étape 2) ne se fait qu'une fois par ordinateur.</div>
+  </div>
+
+</section>
+<section class="chapter" id="sommaire">
+  <div class="kicker">Sommaire</div>
+  <h1>Ce que contient ce guide</h1>
+  <ul class="toc" id="toc"><!-- rempli à la génération --></ul>
+</section>
+
+<!-- ============================ PARTIE 1 ============================ -->
+<section class="part" id="p1">
+  <div class="num">01</div>
+  <h1>Comprendre</h1>
+  <p class="lead">Ce qu'est Claude, ce qu'est un skill, et ce que reverse-motion fait pour vous. Sans ces bases, le reste paraîtra obscur : prenez dix minutes.</p>
+</section>
+
+<section class="chapter" id="c1" data-toc="Claude, Claude Code et les skills">
+  <div class="kicker">Chapitre 1</div>
+  <h1>Claude, Claude Code et les skills</h1>
+  <p class="lead">Trois mots reviennent dans tout le guide. Les voici expliqués simplement.</p>
+
+  <div class="two">
+    <div class="card"><span class="tag">L'ASSISTANT</span><h3>Claude</h3><p>Une intelligence artificielle créée par Anthropic. On lui écrit en français, comme à une personne, et il répond ou il agit. On l'utilise dans l'<strong>application Claude</strong> (site claude.ai, ordinateur, téléphone).</p></div>
+    <div class="card"><span class="tag">L'OUTIL DE TRAVAIL</span><h3>Claude Code</h3><p>Le même Claude, mais qui travaille <strong>directement sur votre ordinateur</strong> : il ouvre des fichiers, lance des programmes, fabrique des vidéos. On le démarre depuis une fenêtre appelée <em>terminal</em> (chapitre 4).</p></div>
+  </div>
+
+  <h2>Et un « skill », c'est quoi ?</h2>
+  <p>Un <strong>skill</strong> (« compétence » en anglais) est un <strong>dossier</strong> qu'on donne à Claude. Il contient :</p>
+  <ul>
+    <li>un <strong>mode d'emploi</strong> écrit pour Claude (le fichier <code>SKILL.md</code>) : la méthode, les étapes, les règles ;</li>
+    <li>des <strong>outils</strong> (petits programmes) que Claude utilise en suivant ce mode d'emploi.</li>
+  </ul>
+  <div class="box info"><div class="t">Une image pour retenir</div><p>Claude est un excellent cuisinier. Un skill, c'est le <strong>cahier de recettes et les ustensiles</strong> d'un chef spécialisé. Sans le cahier, Claude cuisine bien, mais à sa façon. Avec le cahier, il reproduit la recette exacte, avec les bons outils, et vérifie le résultat comme le chef le ferait.</p></div>
+  <p>Une fois le skill installé, vous n'avez rien de technique à faire : vous parlez à Claude normalement, et il ouvre le skill tout seul quand votre demande le concerne. Vous pouvez aussi l'appeler par son nom en tapant <code>/reverse-motion</code>.</p>
+
+  <h2>Ce qu'il vous faut</h2>
+  <table>
+    <tr><th style="width:32%">Élément</th><th>Détail</th></tr>
+    <tr><td><strong>Un ordinateur</strong></td><td>Windows 10/11 ou macOS récent. 8 Go de mémoire minimum (16 Go conseillés), <strong>5 Go d'espace libre</strong> (les outils et Blender pèsent lourd).</td></tr>
+    <tr><td><strong>Un abonnement Claude payant</strong></td><td>Claude Code demande un abonnement <strong>Pro, Max, Team ou Enterprise</strong> (l'offre gratuite ne suffit pas). Pour des vidéos longues ou nombreuses, <strong>Max</strong> évite d'atteindre la limite d'utilisation en plein travail. Les offres changent : vérifiez-les sur <strong>claude.com/pricing</strong>.</td></tr>
+    <tr><td><strong>Une connexion internet</strong></td><td>Stable, surtout pendant l'installation (plusieurs centaines de Mo à télécharger).</td></tr>
+    <tr><td><strong>Du temps</strong></td><td>Installation : 45 à 90 min, une seule fois. Reproduction d'une vidéo de 30 à 60 s : <strong>plusieurs heures</strong> de travail de Claude (vous n'avez pas besoin de rester devant).</td></tr>
+  </table>
+</section>
+
+<section class="chapter" id="c2" data-toc="Ce que fait reverse-motion (et ce qu'il ne fait pas)">
+  <div class="kicker">Chapitre 2</div>
+  <h1>Ce que fait reverse-motion</h1>
+  <p class="lead">Vous donnez une vidéo de motion design (une pub animée, une intro, une vidéo de textes animés). Claude la <strong>recrée entièrement en code</strong>, image par image, puis la mesure pour prouver qu'elle est identique.</p>
+
+  <div class="fig">
+    <svg width="100%" viewBox="0 0 640 200">
+      <defs><marker id="ar2" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#9AA2B4"/></marker></defs>
+      <g font-family="Inter" font-size="10.5" text-anchor="middle">
+        <rect x="6" y="50" width="104" height="100" rx="10" fill="#F4F6FA" stroke="#DCE0E8"/>
+        <polygon points="46,82 46,118 76,100" fill="#15181F"/><text x="58" y="140" fill="#4A5162">Vidéo modèle</text>
+        <g><rect x="140" y="20" width="110" height="44" rx="8" fill="#EEF2FD" stroke="#3355D6"/><text x="195" y="38" font-weight="700">1. Analyser</text><text x="195" y="53" fill="#4A5162" font-size="9">scènes, couleurs, polices</text></g>
+        <g><rect x="140" y="78" width="110" height="44" rx="8" fill="#EEF2FD" stroke="#3355D6"/><text x="195" y="96" font-weight="700">2. Mesurer</text><text x="195" y="111" fill="#4A5162" font-size="9">chaque mouvement</text></g>
+        <g><rect x="140" y="136" width="110" height="44" rx="8" fill="#EEF2FD" stroke="#3355D6"/><text x="195" y="154" font-weight="700">3. Recréer</text><text x="195" y="169" fill="#4A5162" font-size="9">code + objets 3D</text></g>
+        <g><rect x="280" y="50" width="120" height="44" rx="8" fill="#F2EFFC" stroke="#5B3FC4"/><text x="340" y="68" font-weight="700">4. Comparer</text><text x="340" y="83" fill="#4A5162" font-size="9">image par image</text></g>
+        <g><rect x="280" y="108" width="120" height="44" rx="8" fill="#F2EFFC" stroke="#5B3FC4"/><text x="340" y="126" font-weight="700">5. Corriger</text><text x="340" y="141" fill="#4A5162" font-size="9">jusqu'à l'identique</text></g>
+        <path d="M340 94 v12" stroke="#5B3FC4" stroke-width="1.5" marker-end="url(#ar2)"/>
+        <path d="M400 130 q30 0 30 -28 q0 -28 -28 -28" fill="none" stroke="#5B3FC4" stroke-width="1.5" stroke-dasharray="3 3" marker-end="url(#ar2)"/>
+        <rect x="460" y="34" width="174" height="132" rx="10" fill="#15181F"/>
+        <text x="547" y="62" fill="#fff" font-weight="700">Vous recevez</text>
+        <text x="547" y="86" fill="#6FD39B">la vidéo recréée (MP4)</text>
+        <text x="547" y="106" fill="#7FB0FF">le code modifiable</text>
+        <text x="547" y="126" fill="#F3C969">l'original côte à côte</text>
+        <text x="547" y="146" fill="#C9CEDA">un rapport de scores</text>
+        <g stroke="#9AA2B4" stroke-width="1.5" marker-end="url(#ar2)" fill="none"><path d="M110 100 h28"/><path d="M250 100 h28"/><path d="M400 72 h58"/></g>
+      </g>
+    </svg>
+  </div>
+
+  <h2>Pourquoi tout recréer ?</h2>
+  <p>Parce que l'intérêt n'est pas d'avoir une copie : c'est de pouvoir <strong>changer ce que vous voulez</strong> ensuite. Une vidéo recréée en code se modifie en une phrase : autres textes, autres couleurs, votre logo, une autre durée, votre voix. C'est la <strong>règle n° 1</strong> du skill : tout est recréé (fonds, formes, textes, icônes, objets 3D, effets). Seules les images de <strong>personnes réelles</strong> ou d'<strong>objets réels filmés</strong> sont reprises telles quelles dans l'original.</p>
+  <p>Les icônes et objets en relief (3D) sont remodelés automatiquement avec <strong>Blender</strong>, un logiciel de 3D gratuit que l'installation ajoute pour vous.</p>
+
+  <h2>Ce que le skill ne fait pas</h2>
+  <table>
+    <tr><th style="width:34%">Il ne fait pas…</th><th>Ce que vous faites à la place</th></tr>
+    <tr><td>Générer une voix off</td><td>Vous la créez avec ElevenLabs ou vous l'enregistrez (chapitre 12). Claude l'intègre ensuite.</td></tr>
+    <tr><td>Chercher une musique de fond</td><td>Vous la choisissez dans la Bibliothèque audio de YouTube (chapitre 13). Claude la mixe sous la voix.</td></tr>
+    <tr><td>Écrire votre script à votre place</td><td>Vous rédigez le texte (chapitre 11). Claude peut vous aider à l'améliorer si vous le lui demandez.</td></tr>
+    <tr><td>Donner des droits sur la vidéo d'un autre</td><td>Voir l'encadré ci-dessous.</td></tr>
+  </table>
+  <div class="box warn"><div class="t">Droits d'auteur</div><p>La copie exacte de la vidéo de quelqu'un d'autre sert à apprendre et à s'entraîner : <strong>ne la publiez pas telle quelle</strong>. Pour un usage commercial, publiez la version <strong>adaptée à votre marque</strong> (vos textes, vos couleurs, votre voix, votre musique). Le skill vous le rappellera.</p></div>
+</section>
+
+<!-- ============================ PARTIE 2 ============================ -->
+<section class="part" id="p2">
+  <div class="num">02</div>
+  <h1>Installer</h1>
+  <p class="lead">À faire une seule fois par ordinateur. Comptez 45 à 90 minutes, surtout du téléchargement. Suivez le chemin de votre système : <strong>Windows</strong> ou <strong>Mac</strong>.</p>
+  <ul><li>Chapitre 3 : ouvrir le terminal</li><li>Chapitre 4 : les outils de base</li><li>Chapitre 5 : Claude Code</li><li>Chapitre 6 : récupérer le skill</li><li>Chapitre 7 : terminer l'installation et la vérifier</li><li>Chapitre 8 : variante sans terminal (application Claude)</li></ul>
+</section>
+
+<section class="chapter" id="c3" data-toc="Ouvrir et utiliser le terminal">
+  <div class="kicker">Chapitre 3</div>
+  <h1>Ouvrir et utiliser le terminal</h1>
+  <p class="lead">Le terminal est une fenêtre où l'on écrit des commandes au lieu de cliquer. Il fait peur au début, mais vous n'aurez qu'à <strong>copier-coller</strong> les commandes de ce guide.</p>
+
+  <div class="two">
+    <div class="card"><span class="tag">WINDOWS</span><h3>Ouvrir PowerShell</h3><ol class="steps">
+      <li>Appuyez sur la touche <strong>Windows</strong> du clavier.</li>
+      <li>Tapez <strong>PowerShell</strong>.</li>
+      <li>Cliquez sur <strong>Windows PowerShell</strong> (ou <strong>Terminal</strong>).</li></ol>
+      <p class="small">Une fenêtre s'ouvre avec une ligne qui finit par <code>&gt;</code>, par exemple <code>PS C:\Users\Awa&gt;</code>.</p></div>
+    <div class="card"><span class="tag">MAC</span><h3>Ouvrir le Terminal</h3><ol class="steps">
+      <li>Appuyez sur <strong>Cmd + Espace</strong>.</li>
+      <li>Tapez <strong>Terminal</strong>.</li>
+      <li>Appuyez sur <strong>Entrée</strong>.</li></ol>
+      <p class="small">Une fenêtre s'ouvre avec une ligne qui finit par <code>%</code> ou <code>$</code>, par exemple <code>awa@MacBook ~ %</code>.</p></div>
+  </div>
+
+  <h2>Les 5 gestes à connaître</h2>
+  <table>
+    <tr><th style="width:30%">Geste</th><th>Comment</th></tr>
+    <tr><td><strong>Coller une commande</strong></td><td>Windows : <strong>clic droit</strong> dans la fenêtre ou <strong>Ctrl + V</strong>. Mac : <strong>Cmd + V</strong>.</td></tr>
+    <tr><td><strong>Lancer la commande</strong></td><td>Appuyez sur <strong>Entrée</strong>. Attendez que la ligne <code>&gt;</code> ou <code>%</code> réapparaisse avant d'en lancer une autre.</td></tr>
+    <tr><td><strong>Arrêter quelque chose</strong></td><td><strong>Ctrl + C</strong> (Windows et Mac).</td></tr>
+    <tr><td><strong>Rappeler la commande précédente</strong></td><td>Flèche <strong>↑</strong> du clavier.</td></tr>
+    <tr><td><strong>Rouvrir le terminal</strong></td><td>Fermez la fenêtre et rouvrez-la comme ci-dessus. C'est nécessaire <strong>après chaque installation d'outil</strong>, pour que le terminal le « voie ».</td></tr>
+  </table>
+
+  <h2>Lire ce que le terminal répond</h2>
+  <div class="term"><div class="bar"><i></i><i></i><i></i><span>Exemple</span></div><pre><span class="p">&gt;</span> node --version
+<span class="g">v22.11.0</span>                       <span class="c">← un numéro : l'outil est installé</span>
+
+<span class="p">&gt;</span> ffmpeg -version
+<span class="r">ffmpeg : Le terme « ffmpeg » n'est pas reconnu…</span>   <span class="c">← l'outil manque ou le terminal n'a pas été rouvert</span></pre></div>
+  <div class="box tip"><div class="t">Astuce</div><p>Un message en anglais n'est pas forcément une erreur. Le mot à surveiller est <strong>error</strong> ou <strong>erreur</strong>. En cas de doute, copiez le message et collez-le à Claude (dans l'application) en demandant « que veut dire ce message ? ».</p></div>
+  <div class="box warn"><div class="t">Attention</div><p>Ne copiez pas le symbole <code>&gt;</code> ou <code>%</code> du début des exemples : il est déjà affiché par le terminal. Copiez seulement la commande.</p></div>
+</section>
+
+<section class="chapter" id="c4" data-toc="Installer les outils de base">
+  <div class="kicker">Chapitre 4</div>
+  <h1>Installer les outils de base</h1>
+  <p class="lead">Le skill a besoin de cinq outils gratuits. Vous n'aurez jamais à les ouvrir vous-même : Claude s'en sert.</p>
+
+  <table>
+    <tr><th style="width:22%">Outil</th><th>À quoi il sert</th></tr>
+    <tr><td><strong>Git</strong></td><td>Télécharger le skill depuis GitHub et le mettre à jour.</td></tr>
+    <tr><td><strong>Node.js</strong></td><td>Faire tourner le moteur qui dessine la vidéo image par image.</td></tr>
+    <tr><td><strong>Python</strong></td><td>Faire tourner les outils de mesure et Blender.</td></tr>
+    <tr><td><strong>ffmpeg</strong></td><td>Lire et fabriquer les fichiers vidéo et audio.</td></tr>
+    <tr><td><strong>Tesseract</strong></td><td>Lire les textes qui apparaissent dans la vidéo.</td></tr>
+  </table>
+
+  <h2>Sur Windows</h2>
+  <p>Windows 10/11 contient un installateur appelé <strong>winget</strong>. Dans PowerShell, copiez ces lignes <strong>une par une</strong> (Entrée après chacune, attendez la fin, acceptez si Windows demande une autorisation) :</p>
+  <div class="term"><div class="bar"><i></i><i></i><i></i><span>PowerShell — Windows</span></div><pre>winget install --id Git.Git -e
+winget install --id OpenJS.NodeJS.LTS -e
+winget install --id Python.Python.3.13 -e
+winget install --id Gyan.FFmpeg -e
+winget install --id UB-Mannheim.TesseractOCR -e</pre></div>
+  <p>Tesseract ne s'ajoute pas tout seul à la liste des programmes connus du terminal. Collez cette commande (une seule ligne) :</p>
+  <div class="term"><div class="bar"><i></i><i></i><i></i><span>PowerShell — Windows</span></div><pre>[Environment]::SetEnvironmentVariable("Path", [Environment]::GetEnvironmentVariable("Path","User") + ";C:\Program Files\Tesseract-OCR", "User")</pre></div>
+  <p><strong>Fermez PowerShell et rouvrez-le</strong>, puis passez à la vérification ci-dessous.</p>
+  <div class="box warn"><div class="t">Si « winget » n'est pas reconnu</div><p>Ouvrez le <strong>Microsoft Store</strong>, cherchez <strong>App Installer</strong> (Programme d'installation d'application) et mettez-le à jour, puis rouvrez PowerShell.</p></div>
+
+  <h2>Sur Mac</h2>
+  <p>On utilise <strong>Homebrew</strong>, l'installateur de référence sur Mac. Collez cette commande dans le Terminal (une seule ligne). Elle demande votre <strong>mot de passe de session</strong> : tapez-le, il ne s'affiche pas, c'est normal, puis Entrée.</p>
+  <div class="term"><div class="bar"><i></i><i></i><i></i><span>Terminal — Mac</span></div><pre>/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"</pre></div>
+  <p>À la fin, Homebrew affiche une rubrique <strong>Next steps</strong> avec deux ou trois commandes : copiez-les et lancez-les aussi. Puis installez les outils :</p>
+  <div class="term"><div class="bar"><i></i><i></i><i></i><span>Terminal — Mac</span></div><pre>brew install git node python@3.13 ffmpeg tesseract tesseract-lang</pre></div>
+  <p>Fermez le Terminal et rouvrez-le.</p>
+
+  <h2>Vérifier</h2>
+  <div class="term"><div class="bar"><i></i><i></i><i></i><span>Windows et Mac</span></div><pre>git --version
+node --version
+python --version        <span class="c"># sur Mac : python3 --version</span>
+ffmpeg -version
+tesseract --version</pre></div>
+  <div class="box check"><div class="t">Vérifiez</div><p>Chaque commande affiche un numéro de version (Node <strong>18 ou plus</strong>, Python <strong>3.9 ou plus</strong>, 3.13 conseillé). Si l'une dit « n'est pas reconnu » ou « command not found » : rouvrez le terminal ; si ça persiste, réinstallez cet outil.</p></div>
+</section>
+
+<section class="chapter" id="c5" data-toc="Installer Claude Code et se connecter">
+  <div class="kicker">Chapitre 5</div>
+  <h1>Installer Claude Code et se connecter</h1>
+  <p class="lead">Claude Code est l'outil qui fera tout le travail. Son installation tient en une commande.</p>
+
+  <h2>Installer</h2>
+  <div class="term"><div class="bar"><i></i><i></i><i></i><span>PowerShell — Windows</span></div><pre>irm https://claude.ai/install.ps1 | iex</pre></div>
+  <div class="term"><div class="bar"><i></i><i></i><i></i><span>Terminal — Mac</span></div><pre>curl -fsSL https://claude.ai/install.sh | bash</pre></div>
+  <p>Fermez et rouvrez le terminal, puis vérifiez :</p>
+  <div class="term"><div class="bar"><i></i><i></i><i></i><span>Windows et Mac</span></div><pre><span class="p">&gt;</span> claude --version
+<span class="g">2.x.x (Claude Code)</span></pre></div>
+
+  <h2>Se connecter (une seule fois)</h2>
+  <ol class="steps">
+    <li>Dans le terminal, tapez <code>claude</code> puis Entrée.</li>
+    <li>Claude Code pose quelques questions de départ (thème de couleurs, etc.) : choisissez avec les <strong>flèches</strong> et validez avec <strong>Entrée</strong>.</li>
+    <li>Choisissez la connexion avec votre <strong>compte Claude</strong> (abonnement). Votre navigateur s'ouvre : connectez-vous et autorisez.</li>
+    <li>De retour dans le terminal, Claude Code affiche une zone où écrire. Vous êtes connecté.</li>
+    <li>Pour quitter Claude Code : tapez <code>/exit</code> ou appuyez deux fois sur <strong>Ctrl + C</strong>.</li>
+  </ol>
+  <div class="box tip"><div class="t">Astuce</div><p>Claude Code existe aussi dans l'application de bureau Claude et dans des éditeurs comme VS Code. Ce guide utilise le terminal, qui marche partout de la même façon.</p></div>
+  <div class="box info"><div class="t">Raccourci pour la suite</div><p>À partir d'ici, <strong>Claude Code peut faire les installations à votre place</strong>. Au chapitre 6, vous avez le choix : taper les commandes vous-même (chemin A ou B), ou demander à Claude Code de s'en charger (chemin express).</p></div>
+</section>
+
+<section class="chapter" id="c6" data-toc="Récupérer le skill">
+  <div class="kicker">Chapitre 6</div>
+  <h1>Récupérer le skill</h1>
+  <p class="lead">Le skill est publié sur GitHub, un site qui héberge du code. On le copie dans le dossier où Claude Code range ses skills : <code>.claude/skills</code>, dans votre dossier personnel.</p>
+
+  <div class="fig">
+    <div class="tree"><b>Votre dossier personnel</b>  <em>(C:\Users\Awa  ou  /Users/awa)</em>
+└── .claude                      <em>← dossier de Claude Code (caché)</em>
+    └── skills                   <em>← vos skills</em>
+        └── <b>reverse-motion</b>           <em>← le skill, à ce nom exact</em>
+            ├── SKILL.md         <em>← mode d'emploi pour Claude</em>
+            ├── METHODS.md       <em>← méthodes détaillées</em>
+            ├── install.sh / install.ps1
+            ├── engine/          <em>← moteur de rendu</em>
+            └── scripts/         <em>← outils de mesure, Blender…</em></div>
+    <div class="cap">Le dossier doit s'appeler exactement <strong>reverse-motion</strong>, sinon Claude ne le reconnaît pas.</div>
+  </div>
+
+  <h2>Chemin A — avec Git (conseillé : mises à jour en une commande)</h2>
+  <div class="term"><div class="bar"><i></i><i></i><i></i><span>PowerShell — Windows</span></div><pre>git clone https://github.com/oriaagentpro-a11y/reverse-motion.git "$HOME\.claude\skills\reverse-motion"</pre></div>
+  <div class="term"><div class="bar"><i></i><i></i><i></i><span>Terminal — Mac</span></div><pre>git clone https://github.com/oriaagentpro-a11y/reverse-motion.git ~/.claude/skills/reverse-motion</pre></div>
+  <div class="box check"><div class="t">Vérifiez</div><p>La dernière ligne affichée contient <code>done</code> (ou « Résolution des deltas : 100 % »). Aucune ligne ne commence par <code>fatal:</code>.</p></div>
+
+  <h2>Chemin B — sans Git (téléchargement ZIP)</h2>
+  <ol class="steps">
+    <li>Ouvrez <strong>github.com/oriaagentpro-a11y/reverse-motion</strong> dans votre navigateur.</li>
+    <li>Cliquez sur le bouton vert <strong>Code</strong>, puis <strong>Download ZIP</strong>.</li>
+    <li>Décompressez le fichier (double-clic sur Mac ; clic droit &gt; <strong>Extraire tout</strong> sur Windows).</li>
+    <li>Le dossier obtenu s'appelle <code>reverse-motion-main</code> : <strong>renommez-le</strong> en <code>reverse-motion</code>.</li>
+    <li>Déplacez-le dans <code>.claude\skills</code> de votre dossier personnel (créez les dossiers <code>.claude</code> et <code>skills</code> s'ils n'existent pas).</li>
+  </ol>
+  <div class="box tip"><div class="t">Voir les dossiers cachés</div><p>Le dossier <code>.claude</code> est caché. <strong>Mac</strong> : dans le Finder, <strong>Cmd + Maj + .</strong> (point). <strong>Windows</strong> : Explorateur &gt; <strong>Affichage</strong> &gt; <strong>Afficher</strong> &gt; cochez <strong>Éléments masqués</strong>.</p></div>
+
+  <h2>Chemin express — Claude Code le fait pour vous</h2>
+  <p>Lancez <code>claude</code> dans le terminal, puis écrivez :</p>
+  <div class="prompt"><div class="t">À écrire à Claude Code</div><p>Installe le skill reverse-motion pour moi : clone https://github.com/oriaagentpro-a11y/reverse-motion.git dans mon dossier de skills personnels (.claude/skills/reverse-motion), puis lance son script d'installation (install.sh sur Mac, install.ps1 sur Windows) et vérifie avec scripts/doctor.py. Explique-moi chaque étape simplement et dis-moi si un outil manque.</p></div>
+  <p>Claude Code vous demandera d'<strong>autoriser</strong> chaque commande (voir chapitre 14). Si c'est fini et que <code>doctor.py</code> affiche « Tout est prêt », passez directement au chapitre 9.</p>
+  <div class="box warn"><div class="t">Si le dépôt est introuvable (erreur 404)</div><p>Le dépôt n'est peut-être pas encore public, ou l'adresse a changé. Demandez le lien à jour (ou le fichier <code>reverse-motion.zip</code>) à la personne qui vous a envoyé ce guide.</p></div>
+</section>
+
+<section class="chapter" id="c7" data-toc="Terminer l'installation et la vérifier">
+  <div class="kicker">Chapitre 7</div>
+  <h1>Terminer l'installation et la vérifier</h1>
+  <p class="lead">Le skill a besoin de ses propres outils (moteur de rendu, outils de mesure, navigateur Chromium, Blender). Un script installe tout d'un coup.</p>
+
+  <h2>Lancer l'installation du skill</h2>
+  <div class="term"><div class="bar"><i></i><i></i><i></i><span>PowerShell — Windows</span></div><pre>cd "$HOME\.claude\skills\reverse-motion"
+powershell -ExecutionPolicy Bypass -File install.ps1</pre></div>
+  <div class="term"><div class="bar"><i></i><i></i><i></i><span>Terminal — Mac</span></div><pre>cd ~/.claude/skills/reverse-motion
+bash install.sh</pre></div>
+  <p>L'installation prend <strong>10 à 30 minutes</strong>. Elle affiche des rubriques dans cet ordre :</p>
+  <table>
+    <tr><th style="width:42%">Rubrique affichée</th><th>Ce qui se passe</th></tr>
+    <tr><td><code>== Moteur de rendu (Node) ==</code></td><td>Le moteur qui dessine les vidéos et la bibliothèque 3D (Three.js).</td></tr>
+    <tr><td><code>== Outils d'analyse (Python) ==</code></td><td>Les outils qui mesurent la vidéo.</td></tr>
+    <tr><td><code>== Blender ... ==</code></td><td>Blender pour les objets 3D (environ 400 Mo : soyez patient).</td></tr>
+    <tr><td><code>== Chromium ... ==</code></td><td>Le navigateur qui sert à fabriquer les images.</td></tr>
+    <tr><td><code>reverse-motion : vérification…</code></td><td>Le contrôle final (ci-dessous).</td></tr>
+  </table>
+
+  <h2>Le contrôle : doctor.py</h2>
+  <p>À la fin, le script lance automatiquement le contrôle. Vous pouvez le relancer quand vous voulez :</p>
+  <div class="term"><div class="bar"><i></i><i></i><i></i><span>Windows : python   ·   Mac : python3</span></div><pre><span class="p">&gt;</span> python scripts/doctor.py
+reverse-motion : vérification de l'installation
+  <span class="g">OK</span>  Python 3.13.1
+  <span class="g">OK</span>  node
+  <span class="g">OK</span>  ffmpeg
+  <span class="g">OK</span>  tesseract
+  <span class="g">OK</span>  module Python numpy …
+  <span class="g">OK</span>  Three.js (engine/vendor/three-rm.js)
+  <span class="g">OK</span>  Blender (module bpy 5.x)
+  <span class="g">OK</span>  Chromium
+  <span class="g">OK</span>  rendu de test (1 s, 30 images)
+<span class="g">Tout est prêt.</span></pre></div>
+  <div class="box check"><div class="t">Vérifiez</div><p>La dernière ligne est <strong>« Tout est prêt »</strong>. Une ligne marquée <span style="color:#C0392B;font-weight:700">MANQUE</span> donne la commande exacte pour corriger : lancez-la, rouvrez le terminal, relancez <code>doctor.py</code>.</p></div>
+  <div class="box tip"><div class="t">Blender n'a pas pu s'installer ?</div><p>Ce n'est pas bloquant : les objets 3D seront rendus avec Three.js (un peu moins réalistes). Pour l'ajouter plus tard : installez Blender depuis <strong>blender.org</strong>, puis relancez l'installation. Sur Mac : <code>brew install --cask blender</code>.</p></div>
+
+  <h2>Tester sur l'exemple fourni (facultatif, 5 min)</h2>
+  <p>Le skill contient une petite vidéo d'exemple libre de droits. La reproduire prouve que tout fonctionne :</p>
+  <div class="term"><div class="bar"><i></i><i></i><i></i><span>Depuis le dossier du skill (Mac : python3)</span></div><pre>cd examples/demo
+python make_source.py
+python ../../scripts/assemble.py manifest.json out</pre></div>
+  <p>Ouvrez ensuite <code>examples/demo/out/compare/side_by_side.mp4</code> : l'original et la copie défilent côte à côte.</p>
+
+  <h2>Mettre le skill à jour plus tard</h2>
+  <div class="term"><div class="bar"><i></i><i></i><i></i><span>Chemin A uniquement (Git)</span></div><pre>cd ~/.claude/skills/reverse-motion          <span class="c"># Windows : cd "$HOME\.claude\skills\reverse-motion"</span>
+git pull
+bash install.sh                              <span class="c"># Windows : powershell -ExecutionPolicy Bypass -File install.ps1</span></pre></div>
+</section>
+
+<section class="chapter" id="c8" data-toc="Variante : l'application Claude (sans terminal)">
+  <div class="kicker">Chapitre 8</div>
+  <h1>Variante : l'application Claude</h1>
+  <p class="lead">Vous pouvez aussi ajouter le skill à l'application Claude (claude.ai, application de bureau). Claude y travaille dans un ordinateur virtuel en ligne : rien à installer chez vous.</p>
+  <div class="box warn"><div class="t">À savoir avant de choisir</div><ul>
+    <li>Les vidéos longues, Blender et les rendus image par image demandent beaucoup de calcul : dans l'application, le travail peut être <strong>plus lent ou s'arrêter</strong> en route. <strong>Claude Code sur votre ordinateur reste le chemin conseillé.</strong></li>
+    <li>L'application convient bien pour <strong>découvrir</strong> le skill, faire analyser une vidéo, ou travailler sur une vidéo courte.</li></ul></div>
+
+  <h2>Activer l'exécution de code</h2>
+  <ol class="steps">
+    <li>Dans l'application Claude, ouvrez <strong>Paramètres</strong> (Settings) &gt; <strong>Capacités</strong> (Capabilities).</li>
+    <li>Activez <strong>Créer et modifier des fichiers</strong> (appelé aussi <em>Code execution and file creation</em>).</li>
+  </ol>
+
+  <h2>Ajouter le skill</h2>
+  <ol class="steps">
+    <li>Récupérez le fichier <code>reverse-motion.zip</code> fourni avec ce guide. Ne le décompressez pas.</li>
+    <li>Dans l'application, ouvrez <strong>Customize</strong> (Personnaliser) &gt; <strong>Skills</strong>.</li>
+    <li>Cliquez sur <strong>+</strong>, puis <strong>+ Create skill</strong>, puis <strong>Upload a skill</strong>.</li>
+    <li>Choisissez <code>reverse-motion.zip</code>.</li>
+    <li>Le skill apparaît dans la liste : vérifiez que son interrupteur est <strong>activé</strong>.</li>
+  </ol>
+  <div class="box check"><div class="t">Vérifiez</div><p>Dans une nouvelle conversation, écrivez : « Quels skills as-tu ? Décris reverse-motion en deux phrases. » Claude doit le décrire.</p></div>
+  <div class="box warn"><div class="t">Le ZIP téléchargé depuis GitHub ne passe pas ?</div><p>Le ZIP de GitHub contient un dossier nommé <code>reverse-motion-main</code> : l'application le refuse, car le nom du dossier doit être celui du skill. Décompressez-le, renommez le dossier en <code>reverse-motion</code>, recompressez-le, ou utilisez le <code>reverse-motion.zip</code> fourni.</p></div>
+  <div class="box info"><div class="t">Comptes Team et Enterprise</div><p>Si l'option n'apparaît pas, l'administrateur de votre organisation doit autoriser les skills et l'exécution de code.</p></div>
+</section>
+
+<!-- ============================ PARTIE 3 ============================ -->
+<section class="part" id="p3">
+  <div class="num">03</div>
+  <h1>Préparer vos éléments</h1>
+  <p class="lead">Avant de parler à Claude, rassemblez tout dans un dossier : la vidéo modèle, votre script, votre voix off, votre musique et votre marque. Un dossier bien rangé, c'est un travail sans allers-retours.</p>
+</section>
+
+<section class="chapter" id="c9" data-toc="Créer le dossier du projet">
+  <div class="kicker">Chapitre 9</div>
+  <h1>Créer le dossier du projet</h1>
+  <p class="lead">Un dossier par vidéo. Claude y lira vos fichiers et y rangera ses résultats.</p>
+  <div class="tree"><b>Documents/videos/ma-pub-1</b>           <em>← un dossier par projet, nom sans espace ni accent</em>
+├── <b>modele.mp4</b>              <em>← la vidéo à reproduire (chapitre 10)</em>
+├── <b>script.txt</b>              <em>← votre texte, scène par scène (chapitre 11)</em>
+├── <b>voix.mp3</b>                <em>← votre voix off (chapitre 12)</em>
+├── <b>musique.mp3</b>             <em>← votre musique de fond (chapitre 13)</em>
+└── <b>marque/</b>                 <em>← facultatif</em>
+    ├── logo.png            <em>← logo sur fond transparent</em>
+    └── couleurs.txt        <em>← vos couleurs, ex. #E63946, #1D3557</em></div>
+  <div class="box warn"><div class="t">Noms de fichiers</div><p>Pas d'espaces, pas d'accents, pas de caractères spéciaux : <code>ma-pub-1</code>, <code>voix.mp3</code>. Les noms comme <code>Ma Pub (finale) é.mp4</code> provoquent des erreurs.</p></div>
+  <p>Seule la vidéo modèle est obligatoire. Pour une simple reproduction (sans adaptation), elle suffit.</p>
+
+  <h2>Écrire votre marque en clair</h2>
+  <p>Dans <code>couleurs.txt</code>, une couleur par ligne avec son rôle :</p>
+  <div class="tree">fond principal : #0B1F3A
+couleur d'accent : #F4A300
+texte : #FFFFFF
+police souhaitée : Poppins (ou « la même que l'original »)</div>
+  <div class="box tip"><div class="t">Astuce</div><p>Vous ne connaissez pas le code de vos couleurs ? Donnez votre logo à Claude et demandez : « relève les couleurs exactes de ce logo ».</p></div>
+</section>
+
+<section class="chapter" id="c10" data-toc="Choisir la vidéo modèle">
+  <div class="kicker">Chapitre 10</div>
+  <h1>Choisir la vidéo modèle</h1>
+  <p class="lead">Plus la vidéo modèle est nette, plus la copie sera fidèle.</p>
+  <table>
+    <tr><th style="width:30%">Critère</th><th>Recommandation</th></tr>
+    <tr><td><strong>Format</strong></td><td>MP4 de préférence (MOV et WebM fonctionnent aussi).</td></tr>
+    <tr><td><strong>Qualité</strong></td><td>La meilleure disponible : 1080p si possible, 720p minimum. Évitez les vidéos recompressées plusieurs fois (captures d'écran de réseaux sociaux floues).</td></tr>
+    <tr><td><strong>Durée</strong></td><td>Commencez par une vidéo de <strong>15 à 30 secondes</strong>. Une vidéo d'une minute représente plusieurs heures de travail.</td></tr>
+    <tr><td><strong>Contenu</strong></td><td>Idéal : textes animés, formes, icônes, objets 3D, transitions. Les passages avec des personnes filmées sont repris tels quels (règle n° 1).</td></tr>
+    <tr><td><strong>Sans incrustation</strong></td><td>Évitez les vidéos avec un logo de réseau social, des sous-titres ajoutés ou un filigrane par-dessus : ils seraient recréés eux aussi.</td></tr>
+  </table>
+  <div class="box warn"><div class="t">Droits</div><p>Utilisez une vidéo que vous avez le droit d'étudier. La reproduction exacte d'une vidéo d'un tiers ne se publie pas : publiez votre version adaptée (chapitre 16).</p></div>
+</section>
+
+<section class="chapter" id="c11" data-toc="Écrire votre script">
+  <div class="kicker">Chapitre 11</div>
+  <h1>Écrire votre script</h1>
+  <p class="lead">Le script dit à Claude <strong>quoi remplacer</strong> : les textes à l'écran de chaque scène et ce que dit la voix off. Gardez la même structure que la vidéo modèle, c'est ce qui permet de garder son rythme.</p>
+
+  <h2>Étape 1 : faire l'inventaire des scènes du modèle</h2>
+  <p>Demandez-le à Claude, il le fait mieux et plus vite que vous :</p>
+  <div class="prompt"><div class="t">À écrire à Claude</div><p>Regarde modele.mp4 et fais-moi un tableau des scènes : numéro, début et fin (en secondes), textes affichés à l'écran, durée de chaque texte. Je vais m'en servir pour écrire mon script.</p></div>
+
+  <h2>Étape 2 : écrire votre version, scène par scène</h2>
+  <p>Modèle à copier dans <code>script.txt</code> :</p>
+  <div class="tree">PROJET : Pub lancement formation « Vendre en ligne »
+DURÉE VISÉE : identique au modèle (ou : 30 s)
+TON : dynamique, chaleureux
+
+SCÈNE 1 (0 – 3 s)
+  Texte à l'écran : Tu veux vendre en ligne ?
+  Voix off        : Tu veux enfin vendre en ligne, sans te perdre ?
+
+SCÈNE 2 (3 – 7 s)
+  Texte à l'écran : Sans site compliqué
+  Voix off        : Pas besoin d'un site compliqué ni d'un gros budget.
+
+… (une entrée par scène)
+
+SCÈNE FINALE
+  Texte à l'écran : Inscris-toi · lien en bio
+  Logo            : marque/logo.png</div>
+
+  <h2>Les règles d'or</h2>
+  <ul>
+    <li><strong>Longueur des textes à l'écran</strong> : restez proche du nombre de mots du modèle. Un texte deux fois plus long ne tiendra pas dans la même animation.</li>
+    <li><strong>Voix off</strong> : comptez environ <strong>2,5 mots par seconde</strong> en français. Une scène de 4 s accepte une phrase d'environ 10 mots.</li>
+    <li><strong>Lisez votre voix off à voix haute</strong>, chronomètre en main, avant de la générer.</li>
+    <li>Écrivez les nombres comme ils doivent être <strong>affichés</strong> à l'écran (« 7 jours ») et comme ils doivent être <strong>dits</strong> dans la voix off (« sept jours »).</li>
+    <li><strong>Faites relire par Claude</strong> : « Vérifie que chaque texte tient dans la durée de sa scène et que la voix off se lit dans le temps prévu ; propose plus court si besoin. »</li>
+  </ul>
+</section>
+
+<section class="chapter" id="c12" data-toc="Créer la voix off">
+  <div class="kicker">Chapitre 12</div>
+  <h1>Créer la voix off</h1>
+  <p class="lead">Deux options : une voix de synthèse très naturelle avec ElevenLabs, ou votre propre voix. Le résultat attendu est le même : un fichier <code>voix.mp3</code> dans le dossier du projet.</p>
+
+  <h2>Option A : ElevenLabs (voix de synthèse)</h2>
+  <ol class="steps">
+    <li>Allez sur <strong>elevenlabs.io</strong> et créez un compte (bouton <strong>Sign up</strong>).</li>
+    <li>Dans le menu de gauche, ouvrez <strong>Text to Speech</strong> (Synthèse vocale).</li>
+    <li>Choisissez une <strong>voix</strong> (bouton de choix de voix) : écoutez-en plusieurs ; filtrez sur la langue <strong>French</strong> pour un accent français naturel.</li>
+    <li>Choisissez un modèle <strong>multilingue</strong> (par exemple <em>Eleven Multilingual v2</em>) : c'est celui qui prononce le mieux le français.</li>
+    <li>Collez <strong>uniquement le texte de la voix off</strong> de votre script, dans l'ordre des scènes. Laissez une ligne vide entre les scènes pour une petite pause.</li>
+    <li>Cliquez sur <strong>Generate</strong>, écoutez, ajustez si besoin (stabilité, vitesse), régénérez.</li>
+    <li>Téléchargez le résultat en <strong>MP3</strong>, renommez-le <code>voix.mp3</code> et placez-le dans le dossier du projet.</li>
+  </ol>
+  <div class="box warn"><div class="t">Licence : à lire avant de publier</div><ul>
+    <li>L'offre <strong>gratuite</strong> donne environ 10 minutes de voix par mois, mais <strong>n'autorise pas l'usage commercial</strong> et demande de créditer ElevenLabs (mentionner « elevenlabs.io » dans le titre de la vidéo).</li>
+    <li>Pour une pub ou une vidéo qui vend : il faut au minimum l'offre payante <strong>Starter</strong> (environ 6 $ par mois en novembre 2026), qui inclut la licence commerciale.</li>
+    <li>Les offres changent : vérifiez sur <strong>elevenlabs.io/pricing</strong>.</li></ul></div>
+  <div class="box tip"><div class="t">Astuce : une prononciation bizarre ?</div><p>Écrivez le mot comme il se prononce dans le texte de la voix (« I-ROKO », « 7 » → « sept »), sans toucher au texte à l'écran du script.</p></div>
+
+  <h2>Option B : votre propre voix</h2>
+  <ol class="steps">
+    <li><strong>Pièce</strong> : choisissez la plus calme, avec des rideaux, des coussins ou des vêtements (ils absorbent l'écho). Coupez ventilateur et climatisation.</li>
+    <li><strong>Matériel</strong> : un téléphone récent suffit. Application <strong>Dictaphone</strong> (iPhone) ou <strong>Enregistreur</strong> (Android). Un micro-cravate améliore nettement le son.</li>
+    <li><strong>Placement</strong> : téléphone à 15-20 cm de la bouche, un peu de côté (pas en face, pour éviter les souffles sur les « p » et les « b »).</li>
+    <li><strong>Enregistrement</strong> : lisez le texte scène par scène, en laissant 1 seconde de silence entre les scènes. Recommencez une phrase ratée en entier.</li>
+    <li><strong>Nettoyage</strong> (facultatif) : avec <strong>Audacity</strong> (gratuit, audacityteam.org), réduisez le bruit de fond (menu <strong>Effet</strong> &gt; réduction du bruit) et normalisez le volume, puis exportez en <strong>MP3</strong>.</li>
+    <li>Envoyez le fichier sur votre ordinateur, renommez-le <code>voix.mp3</code>, placez-le dans le dossier du projet.</li>
+  </ol>
+  <div class="box tip"><div class="t">Astuce</div><p>Vous pouvez aussi demander à Claude de nettoyer votre enregistrement : « Nettoie voix-brute.m4a : enlève le bruit de fond, les longs silences, normalise le volume, et exporte voix.mp3 ».</p></div>
+</section>
+
+<section class="chapter" id="c13" data-toc="Trouver la musique de fond">
+  <div class="kicker">Chapitre 13</div>
+  <h1>Trouver la musique de fond</h1>
+  <p class="lead">La source conseillée est la <strong>Bibliothèque audio de YouTube</strong> : gratuite, téléchargeable, et chaque morceau indique s'il faut créditer l'artiste.</p>
+  <div class="box warn"><div class="t">Ne téléchargez pas une musique au hasard sur YouTube</div><p>Une chanson trouvée sur YouTube appartient à quelqu'un. Utilisée dans votre vidéo, elle peut provoquer un blocage, un retrait de la vidéo ou une réclamation de droits. Restez dans la Bibliothèque audio.</p></div>
+
+  <h2>Télécharger une musique</h2>
+  <ol class="steps">
+    <li>Connectez-vous à <strong>studio.youtube.com</strong> avec un compte Google (il faut une chaîne YouTube, même vide ; YouTube propose de la créer).</li>
+    <li>Dans le menu de gauche, cliquez sur <strong>Bibliothèque audio</strong> (accès direct : <strong>youtube.com/audiolibrary</strong>).</li>
+    <li>Utilisez la barre de <strong>filtres</strong> : <strong>Genre</strong>, <strong>Ambiance</strong> (« Joyeux », « Inspirant », « Dramatique »…), <strong>Durée</strong>.</li>
+    <li>Ajoutez le filtre <strong>Attribution non requise</strong> : vous n'aurez rien à mentionner.</li>
+    <li>Cliquez sur <strong>Lecture</strong> pour écouter. Choisissez un morceau au moins aussi long que votre vidéo.</li>
+    <li>Survolez la date du morceau et cliquez sur <strong>Télécharger</strong> : vous obtenez un MP3.</li>
+    <li>Renommez-le <code>musique.mp3</code> et placez-le dans le dossier du projet.</li>
+  </ol>
+  <div class="box info"><div class="t">Si le morceau demande une attribution</div><p>Son type de licence affiche une icône <strong>Creative Commons</strong>. Cliquez dessus, puis <strong>Copier</strong> : collez ce texte dans la description de votre vidéo.</p></div>
+  <div class="box warn"><div class="t">Publication hors de YouTube</div><p>La Bibliothèque audio est conçue pour les vidéos YouTube, et YouTube ne précise pas l'usage sur d'autres plateformes. Pour Facebook, Instagram ou TikTok, lisez la licence du morceau, ou utilisez la musique proposée par la plateforme elle-même au moment de publier.</p></div>
+
+  <h2>Choisir la bonne musique</h2>
+  <ul>
+    <li><strong>Le tempo compte</strong> : une musique au rythme proche de celle du modèle garde les animations « sur le temps ». Claude mesure le tempo et peut caler les animations sur votre musique.</li>
+    <li><strong>Sous une voix</strong> : préférez une musique sans chant ou avec peu de paroles.</li>
+    <li>Vous pouvez garder la musique du modèle uniquement si vous en avez les droits.</li>
+  </ul>
+</section>
+
+<!-- ============================ PARTIE 4 ============================ -->
+<section class="part" id="p4">
+  <div class="num">04</div>
+  <h1>Utiliser le skill</h1>
+  <p class="lead">Tout est prêt : place au travail. Vous lancez Claude Code dans le dossier du projet, vous lui donnez vos consignes avec les phrases de ce chapitre, vous répondez à ses questions, puis vous vérifiez le résultat.</p>
+</section>
+
+<section class="chapter" id="c14" data-toc="Lancer Claude Code dans le projet">
+  <div class="kicker">Chapitre 14</div>
+  <h1>Lancer Claude Code dans le projet</h1>
+
+  <h2>1. Ouvrir le terminal dans le dossier du projet</h2>
+  <div class="term"><div class="bar"><i></i><i></i><i></i><span>Windows et Mac</span></div><pre>cd "$HOME\Documents\videos\ma-pub-1"       <span class="c"># Windows</span>
+cd ~/Documents/videos/ma-pub-1              <span class="c"># Mac</span>
+claude                                      <span class="c"># puis lancer Claude Code</span></pre></div>
+  <div class="box tip"><div class="t">Astuce : éviter de taper le chemin</div><p>Tapez <code>cd </code> (avec l'espace), puis <strong>glissez le dossier du projet</strong> depuis l'Explorateur ou le Finder dans la fenêtre du terminal : le chemin s'écrit tout seul. Entrée.</p></div>
+
+  <h2>2. Vérifier que le skill est là</h2>
+  <p>Tapez <code>/</code> : une liste de commandes apparaît. Tapez <code>/rev</code> : <strong>/reverse-motion</strong> doit s'afficher.</p>
+  <div class="box check"><div class="t">Vérifiez</div><p>Si <code>/reverse-motion</code> n'apparaît pas : vérifiez le nom et l'emplacement du dossier (chapitre 6), puis quittez (<code>/exit</code>) et relancez <code>claude</code>.</p></div>
+
+  <h2>3. Comprendre les demandes d'autorisation</h2>
+  <p>Avant de lancer une commande ou de modifier un fichier, Claude Code vous <strong>demande la permission</strong> :</p>
+  <div class="term"><div class="bar"><i></i><i></i><i></i><span>Claude Code</span></div><pre>Do you want to proceed?
+<span class="g">❯ 1. Yes</span>
+  2. Yes, and don't ask again for <span class="y">python3 …</span> commands in this project
+  3. No, and tell Claude what to do differently</pre></div>
+  <table>
+    <tr><th style="width:24%">Choix</th><th>Quand le prendre</th></tr>
+    <tr><td><strong>1. Yes</strong></td><td>Autoriser cette fois-ci.</td></tr>
+    <tr><td><strong>2. Yes, and don't ask again</strong></td><td><strong>Conseillé</strong> pour les commandes du skill (python, node, ffmpeg) : sinon, Claude vous demandera la permission des centaines de fois.</td></tr>
+    <tr><td><strong>3. No</strong></td><td>Si la commande sort du projet (effacer des fichiers ailleurs, par exemple).</td></tr>
+  </table>
+  <div class="box warn"><div class="t">Ne quittez pas en plein travail</div><p>Fermer le terminal arrête Claude. Laissez la fenêtre ouverte, branchez l'ordinateur sur secteur et <strong>empêchez la mise en veille</strong> pendant les longs rendus. Si vous devez arrêter : pour reprendre, relancez <code>claude --continue</code> dans le même dossier.</p></div>
+</section>
+
+<section class="chapter" id="c15" data-toc="Les phrases à écrire à Claude">
+  <div class="kicker">Chapitre 15</div>
+  <h1>Les phrases à écrire à Claude</h1>
+  <p class="lead">Copiez la phrase qui correspond à votre besoin et remplacez ce qui est entre crochets. Commencez toujours par <code>/reverse-motion</code> pour être sûr que le skill est utilisé.</p>
+
+  <h2>Cas 1 : reproduire une vidéo à l'identique</h2>
+  <div class="prompt"><div class="t">Reproduction fidèle</div><p>/reverse-motion Reproduis modele.mp4 à l'identique, avec la fidélité maximale. Tout doit être recréé (règle n° 1). Donne-moi la vidéo recréée, la vidéo côte à côte avec l'original et le rapport des scores.</p></div>
+
+  <h2>Cas 2 : reproduire puis adapter à votre script, votre voix et votre musique</h2>
+  <div class="prompt"><div class="t">Reproduction + adaptation complète</div><p>/reverse-motion Reproduis modele.mp4 à l'identique, puis fais-en une version adaptée :</p>
+    <p>– textes à l'écran et voix off : script.txt ;<br>– voix off : voix.mp3 (cale chaque scène sur la voix) ;<br>– musique de fond : musique.mp3, sous la voix, sans la couvrir ;<br>– couleurs et logo : dossier marque/.</p>
+    <p>Garde le style et les animations du modèle. Livre les deux versions : la copie fidèle et la version adaptée.</p></div>
+
+  <h2>Cas 3 : changer seulement les couleurs et les textes</h2>
+  <div class="prompt"><div class="t">Rebrand simple</div><p>/reverse-motion Une fois la reproduction terminée, fais une version à mes couleurs (marque/couleurs.txt) avec ces textes : [scène 1 : …], [scène 2 : …]. Le rythme doit rester identique.</p></div>
+
+  <h2>Cas 4 : changer le format</h2>
+  <div class="prompt"><div class="t">Autre format</div><p>Fais aussi une version [carrée 1:1 / verticale 9:16 / horizontale 16:9] de la version adaptée, en recomposant les éléments pour qu'aucun texte ne soit coupé.</p></div>
+
+  <h2>Pendant le travail : les phrases utiles</h2>
+  <table>
+    <tr><th style="width:42%">Vous voulez…</th><th>Écrivez</th></tr>
+    <tr><td>Savoir où il en est</td><td>« Où en es-tu ? Qu'est-ce qui reste à faire ? »</td></tr>
+    <tr><td>Voir un premier aperçu</td><td>« Envoie-moi un aperçu de ce qui est déjà fait. »</td></tr>
+    <tr><td>Reprendre après une coupure</td><td>Relancez <code>claude --continue</code>, puis : « Continue là où tu t'es arrêté. »</td></tr>
+    <tr><td>Comprendre un résultat</td><td>« Explique-moi ce rapport simplement. »</td></tr>
+  </table>
+  <div class="box tip"><div class="t">Astuce</div><p>Une demande par message, claire et complète, vaut mieux que dix petits messages. Si vous changez d'avis en cours de route, dites-le tout de suite : refaire une partie coûte moins cher que tout refaire à la fin.</p></div>
+</section>
+
+<section class="chapter" id="c16" data-toc="Répondre aux questions de Claude">
+  <div class="kicker">Chapitre 16</div>
+  <h1>Répondre aux questions de Claude</h1>
+  <p class="lead">Avant de commencer, Claude analyse la vidéo et vous pose quelques questions. Elles s'affichent avec des choix ; la réponse conseillée est souvent marquée <strong>(Recommended)</strong> ou « (Recommandé) ».</p>
+  <table>
+    <tr><th style="width:34%">Question fréquente</th><th>Comment répondre</th></tr>
+    <tr><td>Copie fidèle seulement, ou aussi une version adaptée ?</td><td>Si vous avez préparé script, voix, musique : <strong>les deux</strong>. Sinon : copie fidèle.</td></tr>
+    <tr><td>Quelle police utiliser ?</td><td>Claude propose la police la plus proche de l'original. Acceptez, sauf si votre marque impose la sienne.</td></tr>
+    <tr><td>Un logo ou une image de l'original : le redessiner ?</td><td>Oui, s'il s'agit d'un dessin ou d'un logo (règle n° 1). Une photo de personne réelle est reprise telle quelle.</td></tr>
+    <tr><td>La voix est plus longue que la vidéo : que faire ?</td><td>Choisissez entre <strong>allonger les scènes</strong> (le rythme change un peu) ou <strong>raccourcir le texte</strong> (vous refaites la voix).</td></tr>
+    <tr><td>Quel format de sortie ?</td><td>Celui de votre réseau : 9:16 (Reels, TikTok, Stories), 1:1 ou 4:5 (fil Facebook, Instagram), 16:9 (YouTube).</td></tr>
+  </table>
+  <div class="box tip"><div class="t">Astuce</div><p>Vous pouvez toujours taper votre propre réponse au lieu de choisir une option. Si vous ne savez pas : « Je ne sais pas, choisis ce qui est le plus fidèle et explique-moi pourquoi. »</p></div>
+
+  <h2>Le déroulé, ensuite</h2>
+  <ol class="steps">
+    <li><strong>Analyse</strong> : scènes, couleurs exactes, police, tempo de la musique, inventaire des objets 3D.</li>
+    <li><strong>Reconstruction</strong> scène par scène, puis des objets 3D dans Blender.</li>
+    <li><strong>Comparaison</strong> image par image avec l'original, puis corrections, en plusieurs passes.</li>
+    <li><strong>Assemblage</strong> de la vidéo finale avec le son, et rapport.</li>
+    <li><strong>Adaptation</strong> à votre script, votre voix, votre musique et votre marque (si demandée).</li>
+  </ol>
+  <p>Claude vous tient informé et vous envoie des aperçus. Une vidéo de 30 à 60 s représente <strong>plusieurs heures</strong> de travail : c'est normal, la fidélité se mesure image par image.</p>
+</section>
+
+<section class="chapter" id="c17" data-toc="Lire les résultats">
+  <div class="kicker">Chapitre 17</div>
+  <h1>Lire les résultats</h1>
+  <p class="lead">Claude vous indique où se trouvent les fichiers. Voici ce que vous recevez et comment juger la qualité.</p>
+  <table>
+    <tr><th style="width:32%">Fichier</th><th>Ce que c'est</th></tr>
+    <tr><td><code>reproduction.mp4</code></td><td>La vidéo recréée, avec le son.</td></tr>
+    <tr><td><code>side_by_side.mp4</code></td><td>L'original, la copie et les différences, côte à côte. <strong>Regardez-la en entier</strong> : c'est la meilleure preuve.</td></tr>
+    <tr><td><code>report.json</code></td><td>Le rapport chiffré. Demandez à Claude de vous l'expliquer.</td></tr>
+    <tr><td><code>scenes/*.html</code></td><td>Le code de chaque scène : il permet toutes les modifications futures.</td></tr>
+    <tr><td>Version adaptée</td><td>Le MP4 à votre marque, avec votre voix et votre musique (si demandé).</td></tr>
+  </table>
+
+  <h2>Comprendre les scores</h2>
+  <table>
+    <tr><th style="width:26%">Mesure</th><th style="width:40%">Ce qu'elle dit</th><th>Bon résultat</th></tr>
+    <tr><td><strong>SSIM</strong></td><td>Ressemblance de chaque image avec l'original, de 0 à 1 (1 = identique).</td><td>0,98 ou plus : très difficile à distinguer à l'œil.</td></tr>
+    <tr><td><strong>Delta E (ΔE)</strong></td><td>Écart de couleur.</td><td>Moins de 2 : invisible à l'œil.</td></tr>
+    <tr><td><strong>Fantômes</strong></td><td>Textes en double, éléments en avance ou en retard.</td><td>0.</td></tr>
+    <tr><td><strong>Recréation</strong></td><td>Chaque partie est-elle bien recréée (règle n° 1) ?</td><td>« recréé » partout, sauf extraits réels.</td></tr>
+    <tr><td><strong>Objets 3D</strong></td><td>Score de chaque objet modélisé dans Blender.</td><td>Le plus proche possible de 1 ; les défauts restants sont listés.</td></tr>
+  </table>
+  <div class="box warn"><div class="t">Un bon score ne suffit pas</div><p>Un texte en double ne coûte presque rien au score global. C'est pour ça que le skill cherche aussi les fantômes et vous demande de regarder la vidéo côte à côte : <strong>vos yeux restent le juge final</strong>.</p></div>
+
+  <h2>Demander une correction</h2>
+  <p>Décrivez <strong>quand</strong> (le temps, en secondes) et <strong>où</strong> (l'endroit à l'écran) :</p>
+  <div class="prompt"><div class="t">Correction précise</div><p>À 0:12, le titre en haut arrive un peu trop tard par rapport à l'original, et à 0:25 le bleu du fond est plus clair. Corrige ces deux points, puis renvoie-moi la vidéo côte à côte de 0:10 à 0:27.</p></div>
+  <p class="small">Même principe pour la version adaptée : « Scène 3 : remplace le texte par “Inscriptions ouvertes”, logo plus grand à la fin, musique un peu plus basse. »</p>
+</section>
+
+<!-- ============================ PARTIE 5 ============================ -->
+<section class="part" id="p5">
+  <div class="num">05</div>
+  <h1>Aide</h1>
+  <p class="lead">Les problèmes les plus fréquents et leurs solutions, le vocabulaire du guide, et une page aide-mémoire à garder sous la main.</p>
+</section>
+
+<section class="chapter" id="depannage" data-toc="Dépannage">
+  <div class="kicker">Chapitre 18</div>
+  <h1>Dépannage</h1>
+  <p class="lead">Trouvez votre problème dans la colonne de gauche. Si rien ne correspond, voyez la règle d'or en bas de page.</p>
+  <table>
+    <tr><th style="width:31%">Ce que vous voyez</th><th style="width:30%">Cause probable</th><th>Solution</th></tr>
+    <tr><td>« … n'est pas reconnu » / « command not found »</td><td>Outil non installé, ou terminal pas rouvert.</td><td>Fermez et rouvrez le terminal. Sinon, réinstallez l'outil (chapitre 4).</td></tr>
+    <tr><td>« winget n'est pas reconnu »</td><td>Windows ancien ou App Installer pas à jour.</td><td>Microsoft Store &gt; App Installer &gt; Mettre à jour.</td></tr>
+    <tr><td>« l'exécution de scripts est désactivée »</td><td>Sécurité de PowerShell.</td><td>Lancez le script avec <code>powershell -ExecutionPolicy Bypass -File install.ps1</code>.</td></tr>
+    <tr><td><code>fatal: repository not found</code></td><td>Adresse fausse ou dépôt privé.</td><td>Vérifiez l'adresse ; demandez le lien ou le ZIP à jour (chapitre 6).</td></tr>
+    <tr><td><code>fatal: destination path already exists</code></td><td>Le skill est déjà là.</td><td>Mettez-le à jour avec <code>git pull</code> (chapitre 7).</td></tr>
+    <tr><td><code>doctor.py</code> affiche MANQUE</td><td>Un composant n'est pas installé.</td><td>Lancez la commande affichée sur la même ligne, rouvrez le terminal, relancez <code>doctor.py</code>.</td></tr>
+    <tr><td>« externally-managed-environment » (Mac)</td><td>Protection de Python de Homebrew.</td><td>Le script d'installation la contourne tout seul ; relancez <code>bash install.sh</code>.</td></tr>
+    <tr><td>Blender ne s'installe pas</td><td>Votre version de Python n'a pas de Blender compatible.</td><td>Installez Python 3.13, ou Blender depuis blender.org (Mac : <code>brew install --cask blender</code>).</td></tr>
+    <tr><td><code>tesseract</code> introuvable (Windows)</td><td>Pas ajouté au chemin.</td><td>Commande du chapitre 4, puis rouvrez PowerShell.</td></tr>
+    <tr><td><code>/reverse-motion</code> n'apparaît pas</td><td>Dossier mal nommé ou mal placé.</td><td>Dossier exactement <code>.claude/skills/reverse-motion</code> contenant <code>SKILL.md</code>. Relancez <code>claude</code>.</td></tr>
+    <tr><td>Claude Code demande une connexion ou un paiement</td><td>Pas d'abonnement compatible.</td><td>Abonnement Pro, Max, Team ou Enterprise requis.</td></tr>
+    <tr><td>« usage limit reached »</td><td>Limite d'utilisation de votre abonnement atteinte.</td><td>Attendez l'heure indiquée, puis <code>claude --continue</code> et « Continue ». Max donne plus de marge.</td></tr>
+    <tr><td>Le travail s'est arrêté (veille, coupure)</td><td>Ordinateur en veille ou terminal fermé.</td><td>Même dossier, <code>claude --continue</code>, « Continue là où tu t'es arrêté ».</td></tr>
+    <tr><td>« No space left on device » / disque plein</td><td>Rendus image par image volumineux.</td><td>Libérez 5 à 10 Go ; demandez à Claude de supprimer les images temporaires du projet.</td></tr>
+    <tr><td>La voix et l'animation sont décalées</td><td>Voix plus longue ou plus courte que les scènes.</td><td>« Recale chaque scène sur la voix » ou raccourcissez le texte (chapitre 11).</td></tr>
+    <tr><td>L'app Claude refuse le ZIP</td><td>Dossier interne mal nommé.</td><td>Utilisez <code>reverse-motion.zip</code> fourni (chapitre 8).</td></tr>
+  </table>
+  <div class="box info"><div class="t">La règle d'or</div><p>Copiez <strong>le message d'erreur complet</strong> et collez-le à Claude avec : « J'ai cette erreur en suivant le guide reverse-motion, chapitre [X]. Explique-moi et corrige. » Dans neuf cas sur dix, il trouve et répare.</p></div>
+</section>
+
+<section class="chapter" id="lexique" data-toc="Lexique">
+  <div class="kicker">Chapitre 19</div>
+  <h1>Lexique</h1>
+  <table>
+    <tr><th style="width:26%">Mot</th><th>Définition simple</th></tr>
+    <tr><td><strong>Skill</strong></td><td>Dossier de méthode et d'outils qu'on donne à Claude pour une tâche précise.</td></tr>
+    <tr><td><strong>Claude Code</strong></td><td>Claude qui travaille directement sur votre ordinateur, lancé depuis le terminal.</td></tr>
+    <tr><td><strong>Terminal</strong></td><td>Fenêtre où l'on écrit des commandes (PowerShell sur Windows, Terminal sur Mac).</td></tr>
+    <tr><td><strong>Commande</strong></td><td>Instruction écrite dans le terminal, validée par Entrée.</td></tr>
+    <tr><td><strong>GitHub / dépôt</strong></td><td>Site qui héberge du code ; un dépôt est un projet hébergé (ici, le skill).</td></tr>
+    <tr><td><strong>Cloner</strong></td><td>Télécharger un dépôt avec Git, en gardant la possibilité de le mettre à jour.</td></tr>
+    <tr><td><strong>Motion design</strong></td><td>Animation de textes, formes et graphismes (pubs animées, intros, explications).</td></tr>
+    <tr><td><strong>Rendu</strong></td><td>Fabrication des images de la vidéo, une par une.</td></tr>
+    <tr><td><strong>Image (frame)</strong></td><td>Une vidéo est une suite d'images : 25 ou 30 par seconde.</td></tr>
+    <tr><td><strong>GSAP</strong></td><td>Bibliothèque d'animation utilisée dans le code des scènes.</td></tr>
+    <tr><td><strong>Blender</strong></td><td>Logiciel gratuit de 3D ; le skill l'utilise pour remodeler les objets en relief.</td></tr>
+    <tr><td><strong>Three.js</strong></td><td>Bibliothèque qui affiche la 3D dans une page web, modifiable en code.</td></tr>
+    <tr><td><strong>SSIM</strong></td><td>Score de ressemblance d'une image avec l'original (1 = identique).</td></tr>
+    <tr><td><strong>Delta E (ΔE)</strong></td><td>Écart entre deux couleurs ; sous 2, l'œil ne voit pas la différence.</td></tr>
+    <tr><td><strong>Fantôme</strong></td><td>Défaut : texte en double, élément en avance ou en retard.</td></tr>
+    <tr><td><strong>Rebrand</strong></td><td>Version de la vidéo à vos couleurs, vos textes, votre logo.</td></tr>
+    <tr><td><strong>Voix off</strong></td><td>Voix qui commente la vidéo, sans qu'on voie la personne.</td></tr>
+    <tr><td><strong>Licence commerciale</strong></td><td>Droit d'utiliser une voix, une musique ou une image dans un contenu qui vend.</td></tr>
+  </table>
+</section>
+
+<section class="chapter" id="memo" data-toc="Aide-mémoire (une page)">
+  <div class="kicker">À garder sous la main</div>
+  <h1>Aide-mémoire</h1>
+  <div class="two">
+    <div>
+      <h3>Installation (une fois)</h3>
+      <ul class="checklist">
+        <li>Git, Node, Python 3.13, ffmpeg, Tesseract installés (ch. 4)</li>
+        <li>Claude Code installé et connecté (ch. 5)</li>
+        <li>Skill dans <code>.claude/skills/reverse-motion</code> (ch. 6)</li>
+        <li><code>install.ps1</code> / <code>install.sh</code> lancé (ch. 7)</li>
+        <li><code>doctor.py</code> : « Tout est prêt »</li>
+      </ul>
+      <h3>Chaque nouvelle vidéo</h3>
+      <ul class="checklist">
+        <li>Dossier projet sans espaces ni accents (ch. 9)</li>
+        <li><code>modele.mp4</code> net, 15-30 s pour commencer (ch. 10)</li>
+        <li><code>script.txt</code> scène par scène (ch. 11)</li>
+        <li><code>voix.mp3</code> : licence vérifiée (ch. 12)</li>
+        <li><code>musique.mp3</code> : Bibliothèque audio YouTube (ch. 13)</li>
+        <li><code>marque/</code> : logo et couleurs (facultatif)</li>
+        <li>Ordinateur sur secteur, veille désactivée</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Les commandes</h3>
+      <div class="term"><div class="bar"><i></i><i></i><i></i><span>Les plus utiles</span></div><pre><span class="c"># aller dans le projet</span>
+cd [glisser le dossier ici]
+<span class="c"># lancer / reprendre Claude Code</span>
+claude
+claude --continue
+<span class="c"># vérifier l'installation</span>
+python scripts/doctor.py
+<span class="c"># mettre le skill à jour</span>
+git pull
+<span class="c"># quitter Claude Code</span>
+/exit</pre></div>
+      <h3>La phrase de départ</h3>
+      <div class="prompt"><div class="t">À écrire à Claude</div><p>/reverse-motion Reproduis modele.mp4 à l'identique, puis adapte-le avec script.txt, voix.mp3, musique.mp3 et le dossier marque/.</p></div>
+      <h3>Les bons scores</h3>
+      <p class="small">SSIM ≥ 0,98 · ΔE &lt; 2 · 0 fantôme · « recréé » partout · et la vidéo côte à côte regardée en entier.</p>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>

@@ -1,9 +1,9 @@
 # Installation de reverse-motion sous Windows (PowerShell). Lancer :  powershell -ExecutionPolicy Bypass -File install.ps1
 $ErrorActionPreference = "Stop"
 $Here = Split-Path -Parent $MyInvocation.MyCommand.Path
-foreach ($c in @("node", "python", "ffmpeg")) {
+foreach ($c in @("node", "python", "ffmpeg", "tesseract")) {
   if (-not (Get-Command $c -ErrorAction SilentlyContinue)) {
-    Write-Host "$c manquant. Installez-le (par exemple : winget install OpenJS.NodeJS.LTS / Python.Python.3.12 / Gyan.FFmpeg)"; exit 1
+    Write-Host "$c manquant. Installez-le (par exemple : winget install OpenJS.NodeJS.LTS / Python.Python.3.13 / Gyan.FFmpeg / UB-Mannheim.TesseractOCR), puis rouvrez PowerShell"; exit 1
   }
 }
 Write-Host "== Moteur de rendu (Node) =="

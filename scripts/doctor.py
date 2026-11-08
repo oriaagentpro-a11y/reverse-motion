@@ -22,10 +22,11 @@ def line(good, what, fix=''):
 print('reverse-motion : vérification de l\'installation')
 line(sys.version_info >= (3, 9), f'Python {sys.version.split()[0]}', 'Python 3.9 ou plus récent')
 for exe, fix in [('node', 'Node.js 18+ : https://nodejs.org'), ('ffmpeg', 'brew/apt/winget install ffmpeg'),
-                 ('ffprobe', 'fourni avec ffmpeg')]:
+                 ('ffprobe', 'fourni avec ffmpeg'),
+                 ('tesseract', 'OCR : brew install tesseract tesseract-lang | sudo apt install tesseract-ocr tesseract-ocr-fra | winget install UB-Mannheim.TesseractOCR')]:
     line(shutil.which(exe) is not None, exe, fix)
 for mod, pkg in [('numpy', 'numpy'), ('cv2', 'opencv-python'), ('skimage', 'scikit-image'), ('scipy', 'scipy'),
-                 ('PIL', 'pillow'), ('playwright', 'playwright'), ('librosa', 'librosa'), ('fontTools', 'fonttools')]:
+                 ('PIL', 'pillow'), ('playwright', 'playwright'), ('librosa', 'librosa'), ('fontTools', 'fonttools'), ('pytesseract', 'pytesseract')]:
     try:
         importlib.import_module(mod); good = True
     except Exception:  # noqa: BLE001
