@@ -9,6 +9,13 @@ Mesures : SSIM moyen par image (0–1), Delta E 2000 moyen. Seuil visé : SSIM �
 
 ---
 
+
+> **Règle n° 1 (prioritaire sur tout ce qui suit) : tout recréer.** Les plaques, le décalque et la
+> garde décrits plus bas servent à mesurer et à travailler ; dans le livrable final, plus aucun pixel
+> de la vidéo d'origine, sauf les images ou vidéos de personnes réelles et d'objets réels filmés ou
+> photographiés (coupés dans l'original). La fidélité visée : côte à côte, on croirait la même vidéo
+> dupliquée. Voir SKILL.md, « Tout recréer », et le piège P39.
+
 ## 0. Ordre de travail (pipeline)
 
 1. **Cartographier** (planches horodatées, coupes, palette, tempo) → `analysis/scenes.json`.
@@ -456,6 +463,12 @@ d'origine), signalés au rapport : ce ne sont pas des doublons, la garde ne les 
   dans `<objet>.glb.js`. Exporter le glTF **sans** conversion Y-haut (`export_yup=False`) pour garder les axes
   de Blender ; un texte Blender (courbe) n'est pas exporté : le convertir en maillage. Dans Three.js, calculer
   les matrices locales (`updateMatrixWorld`) avant de les copier, et rendre les deux faces.
+
+- **P39** Une reproduction qui garde des plaques (pixels de l'original) peut avoir un excellent score et
+  être inutilisable : dès qu'on change un texte, une durée ou une couleur pour le brief de l'utilisateur,
+  la plaque ne suit pas (ancien texte visible, décalage du rendu, fantômes). Les reproductions
+  « TraderFactor » (§ 12) et « Créateur & Payé » (§ 13) ont été faites avant la règle n° 1 : leurs fonds et
+  effets sont encore en plaques et seraient à recréer. Le rapport `recreation` d'`assemble.py` le signale.
 
 ## 11. Journal des scores du pilote
 

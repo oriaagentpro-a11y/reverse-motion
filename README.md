@@ -69,6 +69,7 @@ différences) et `out/report.json` (scores par segment, anomalies, fantômes pos
 | Comparer | `scripts/compare.py` |
 | Recaler image par image | `scripts/register.py` |
 | Plaques d'effet WebGL | `scripts/extract_plate.py` |
+| Règle n° 1 : tout recréer (seules les personnes et objets réels filmés sont coupés dans l'original), contrôlée au rapport | `scripts/assemble.py` (clé `recreation`) |
 | Garde anti-fantômes | `scripts/ghost_guard.py` |
 | Objets et icônes 3D : pose, modèle Blender, rendu Cycles, Three.js | `scripts/fit_object_pose.py`, `scripts/blender_setup.sh`, `scripts/blender_object.py`, `scripts/object_score.py`, `engine/rm-3d.js` (guide : `BLENDER_GUIDE.md`) |
 | Régler automatiquement | `scripts/optimize.py` |

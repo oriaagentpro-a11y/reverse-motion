@@ -5,6 +5,8 @@ manifest = {"source": "src.mp4", "end": 46.9667, "segments": [
    {"id": "S01-S03", "kind": "scene", "html": "scenes/pilot.html", "start": 0, "end": 5.0667},
    {"id": "S05", "kind": "layer", "html": "scenes/s05.html", "start": 8.5, "end": 11.1667},   # transparent, drawn on top
    {"id": "S09-S13", "kind": "extract", "start": 20.8, "end": 26.8333, "reason": "..."}, ...]}
+A segment may carry "footage": "personne" / "objet réel" (rule n° 1: only real people and real objects may
+keep the original's pixels); the report's "recreation" key flags every other segment that still uses them.
 Optional "objects_3d": path of the 3D inventory (default analysis/objects_3d.json), copied into the report.
 Paths are relative to the manifest. Writes out_dir/reproduction.mp4 (with the source audio),
 out_dir/side_by_side.mp4 and out_dir/report.json (SSIM / Delta E per segment).
@@ -144,6 +146,21 @@ def main():
             cv2.imwrite(os.path.join(out, 'ghosts.png'), np.vstack(tiles))
     cuts = sorted({round(sg['start'] * fps) for sg in man['segments']} | {round(sg['end'] * fps) for sg in man['segments']})
     report['cuts'] = [{'frame': c, 'before': ss[c - 1] if 0 < c <= len(ss) else None, 'after': ss[c] if c < len(ss) else None} for c in cuts]
+    # Rule n° 1 "tout recréer": no pixel of the original in the deliverable, except real footage
+    # (people, real objects filmed or photographed) declared with "footage" on an extract segment
+    import re
+    rec = {}
+    for s_ in man['segments']:
+        if s_['kind'] == 'extract':
+            rec[s_['id']] = f"extrait réel ({s_['footage']})" if s_.get('footage') else 'PIXELS DE L\'ORIGINAL (extract sans "footage")'
+        elif s_.get('html'):
+            html = open(os.path.join(base, s_['html'].split('#')[0].split('?')[0]), encoding='utf-8', errors='ignore').read()
+            uses = re.search(r'RMGL\.decalque\(|extract_plate|/plates/', html)
+            rec[s_['id']] = 'PIXELS DE L\'ORIGINAL (plaques)' if uses and not s_.get('footage') else \
+                (f"recréé + extrait réel ({s_['footage']})" if s_.get('footage') else 'recréé')
+    report['recreation'] = rec
+    bad = [k for k, v in rec.items() if v.startswith('PIXELS')]
+    print('recréation : ' + ('tout est recréé' if not bad else f"{len(bad)} segment(s) gardent des pixels de l'original : " + ', '.join(bad)))
     # 3D objects (rule "objets 3D"): one row per inventoried object, with its own local score (object_score.py)
     inv = os.path.join(base, man.get('objects_3d', 'analysis/objects_3d.json'))
     if os.path.exists(inv):
